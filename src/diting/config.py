@@ -27,15 +27,18 @@ def load_config(path: str | None = None) -> Config:
     path = path or os.path.join(os.path.dirname(__file__), "..", "..", "config.yaml")
     with open(path, "r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
-    return Config(
-        deepseek_base_url=raw["deepseek"]["base_url"],
-        deepseek_model=raw["deepseek"]["model"],
-        deepseek_api_key_env=raw["deepseek"]["api_key_env"],
-        session_records_dir=raw["signal"]["session_records_dir"],
-        lookback_days=int(raw["signal"]["lookback_days"]),
-        searxng_url=raw["crawl"]["searxng_url"],
-        github_token_env=raw["crawl"]["github_token_env"],
-        vault_inbox_dir=raw["deliver"]["vault_inbox_dir"],
-        feishu_target=raw["deliver"]["feishu_target"],
-        state_dir=raw["state_dir"],
-    )
+    try:
+        return Config(
+            deepseek_base_url=raw["deepseek"]["base_url"],
+            deepseek_model=raw["deepseek"]["model"],
+            deepseek_api_key_env=raw["deepseek"]["api_key_env"],
+            session_records_dir=raw["signal"]["session_records_dir"],
+            lookback_days=int(raw["signal"]["lookback_days"]),
+            searxng_url=raw["crawl"]["searxng_url"],
+            github_token_env=raw["crawl"]["github_token_env"],
+            vault_inbox_dir=raw["deliver"]["vault_inbox_dir"],
+            feishu_target=raw["deliver"]["feishu_target"],
+            state_dir=raw["state_dir"],
+        )
+    except KeyError as e:
+        raise ValueError(f"配置文件缺少字段 {e}（文件：{path}）") from e

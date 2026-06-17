@@ -1,0 +1,8 @@
+pyproject.toml
+src/diting/__init__.py
+src/diting.egg-info/PKG-INFO
+src/diting.egg-info/SOURCES.txt
+src/diting.egg-info/dependency_links.txt
+src/diting.egg-info/requires.txt
+src/diting.egg-info/top_level.txt
+tests/test_config.py

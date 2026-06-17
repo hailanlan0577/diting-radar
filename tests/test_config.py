@@ -12,9 +12,16 @@ def test_load_config_reads_fields(tmp_path):
         state_dir: "/st"
     """))
     cfg = load_config(str(cfg_file))
+    assert cfg.deepseek_base_url == "http://x/v1"
     assert cfg.deepseek_model == "deepseek-v4-pro"
+    assert cfg.deepseek_api_key_env == "DS_KEY"
+    assert cfg.session_records_dir == "/recs"
     assert cfg.lookback_days == 3
     assert cfg.searxng_url == "http://s:8080"
+    assert cfg.github_token_env == "GH"
+    assert cfg.vault_inbox_dir == "/inbox"
+    assert cfg.feishu_target == "me"
+    assert cfg.state_dir == "/st"
 
 def test_api_key_missing_raises(tmp_path, monkeypatch):
     cfg_file = tmp_path / "config.yaml"
