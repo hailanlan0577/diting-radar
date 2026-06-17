@@ -25,3 +25,8 @@ def test_source_degrades_on_error():
     def boom(*a, **k): raise RuntimeError("net down")
     assert search_arxiv("x", get=boom) == []
     assert search_hn("x", get=boom) == []
+
+def test_hn_skips_hit_without_url_or_objectid():
+    payload = {"hits": [{"title": "no url no id"}]}
+    out = search_hn("x", get=lambda *a, **k: _Resp(payload=payload))
+    assert out == []

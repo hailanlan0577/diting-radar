@@ -13,7 +13,9 @@ def search_hn(query: str, max_results: int = 5, *, get=httpx.get) -> list[Candid
     out: list[Candidate] = []
     for h in hits:
         title = (h.get("title") or "").strip()
-        url = h.get("url") or f"https://news.ycombinator.com/item?id={h.get('objectID')}"
-        if title:
+        url = h.get("url") or (
+            f"https://news.ycombinator.com/item?id={h['objectID']}" if h.get("objectID") else ""
+        )
+        if title and url:
             out.append(Candidate(title=title, url=url, summary="", source="hackernews"))
     return out
