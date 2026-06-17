@@ -113,18 +113,18 @@ state/
 ```yaml
 # config.example.yaml — 拷成 config.yaml 后填真实值
 deepseek:
-  base_url: "https://api.deepseek.com/v1"   # 复用 OpenClaw 的 deepseek-v4-pro endpoint；填实际值
-  model: "deepseek-v4-pro"
-  api_key_env: "DEEPSEEK_API_KEY"           # 真实 key 放环境变量，不写进文件
+  base_url: "https://api.deepseek.com/v1"   # ✅ 已核对：Mac Studio OpenClaw 的 deepseek provider
+  model: "deepseek-v4-pro"                   # provider 里有 deepseek-v4-flash / -pro 两个，取 pro
+  api_key_env: "DEEPSEEK_API_KEY"           # 真实 key 放环境变量；值=macstudio ~/.openclaw/openclaw.json providers.deepseek.apiKey
 signal:
   session_records_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/会话记录"
   lookback_days: 5
 crawl:
-  searxng_url: "http://127.0.0.1:8080"      # 你的 searxng 实例
+  searxng_url: "http://localhost:8080"      # ✅ 已核对：本机 searxng 实例
   github_token_env: "GITHUB_TOKEN"
 deliver:
   vault_inbox_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/Inbox"
-  feishu_target: "me"                        # lark-cli im 发给本人
+  feishu_target: "ou_你的openid"             # 飞书 open_id(ou_开头)，发私聊；获取方式见"手动验收"
 state_dir: "/Users/<dev-user>/diting-radar/state"
 ```
 
@@ -1207,7 +1207,7 @@ def synthesize(client, lens: str, date: str, candidates: list[Candidate],
 
 **Files:** Create `src/diting/deliver/__init__.py`, `src/diting/deliver/obsidian_out.py`, `src/diting/deliver/feishu.py` · Test `tests/test_deliver.py`
 
-> **需现场核对**：`lark-cli` 发消息的确切子命令以本机 `lark-cli im --help` 为准（本计划按 `lark-cli im send --to <target> --text <msg>` 写，若不符只改 `feishu.py` 里拼 argv 那一行）。
+> **已核对（2026-06-18）**：发私聊用 `lark-cli im +messages-send --user-id <ou_open_id> --text <msg>`（`--user-id`/`--chat-id` 二选一；`--text`/`--markdown` 二选一）。`feishu_target` 填用户 open_id。
 
 **Interfaces:**
 - Produces:
@@ -1315,7 +1315,7 @@ def format_feishu_message(report: Report) -> str:
 
 def send_to_feishu(report: Report, target: str, *, run=subprocess.run) -> bool:
     msg = format_feishu_message(report)
-    argv = ["lark-cli", "im", "send", "--to", target, "--text", msg]
+    argv = ["lark-cli", "im", "+messages-send", "--user-id", target, "--text", msg]
     try:
         return run(argv, capture_output=True).returncode == 0
     except Exception:
