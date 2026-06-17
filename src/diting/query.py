@@ -1,5 +1,6 @@
 # src/diting/query.py
 from __future__ import annotations
+import json
 from diting.models import Interests
 
 _LENS_PROMPT = {
@@ -16,6 +17,6 @@ def generate_queries(client, lens: str, interests: Interests, profile: dict,
            "open_loops": list(interests.open_loops), "profile": profile}
     data = client.complete_json([
         {"role": "system", "content": sys},
-        {"role": "user", "content": str(ctx)},
+        {"role": "user", "content": json.dumps(ctx, ensure_ascii=False)},
     ])
     return list(data.get("queries", []) or [])[:max_queries]

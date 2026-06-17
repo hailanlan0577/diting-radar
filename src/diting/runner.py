@@ -35,21 +35,29 @@ def build_known_context(interests: Interests, profile: dict) -> str:
 def run_report(lens, cfg, client, store, *, now_ts=None, sources=None,
                feishu_run=subprocess.run) -> Report:
     now_ts = now_ts if now_ts is not None else time.time()
-    signals = collect_session_records(cfg.session_records_dir, cfg.lookback_days, now_ts)
-    interests = distill_interests(client, signals) if signals else Interests((), (), (), ())
-    profile = fatten_profile(store.load_profile(), interests)
-    store.save_profile(profile)
-    queries = generate_queries(client, lens, interests, profile)
-    candidates, notes = run_crawl(queries, sources or build_sources(cfg))
-    candidates = filter_unpushed(candidates, store)
-    candidates = judge_novelty(client, candidates, build_known_context(interests, profile))
     date = time.strftime("%Y-%m-%d", time.localtime(now_ts))
-    report = synthesize(client, lens, date, candidates, interests, notes)
+    degraded = False
+    try:
+        signals = collect_session_records(cfg.session_records_dir, cfg.lookback_days, now_ts)
+        interests = distill_interests(client, signals) if signals else Interests((), (), (), ())
+        profile = fatten_profile(store.load_profile(), interests)
+        store.save_profile(profile)
+        queries = generate_queries(client, lens, interests, profile)
+        candidates, notes = run_crawl(queries, sources or build_sources(cfg))
+        candidates = filter_unpushed(candidates, store)
+        candidates = judge_novelty(client, candidates, build_known_context(interests, profile))
+        report = synthesize(client, lens, date, candidates, interests, notes)
+    except Exception as e:
+        report = Report(lens=lens, date=date, items=(),
+                        notes=(f"⚠️ DeepSeek 暂时不可用，本次跳过：{e}",))
+        degraded = True
     try:
         write_report_to_inbox(report, cfg.vault_inbox_dir, now_ts)
-        send_to_feishu(report, cfg.feishu_target, run=feishu_run)
-        for it in report.items:
-            store.mark_pushed(it.url, it.title)
+        if degraded or not report.is_empty():
+            send_to_feishu(report, cfg.feishu_target, run=feishu_run)
+        if not degraded:
+            for it in report.items:
+                store.mark_pushed(it.url, it.title)
     except Exception as e:
         print(f"[谛听] 投递失败，未标记已推送（下次重试）：{e}")
     return report

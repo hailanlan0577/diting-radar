@@ -1,5 +1,6 @@
 # src/diting/synthesize.py
 from __future__ import annotations
+import json
 from diting.models import Candidate, Interests, RankedItem, Report
 
 _SYSTEM = (
@@ -19,7 +20,7 @@ def synthesize(client, lens: str, date: str, candidates: list[Candidate],
                                "source": c.source} for c in candidates]}
         data = client.complete_json([
             {"role": "system", "content": _SYSTEM},
-            {"role": "user", "content": str(ctx)},
+            {"role": "user", "content": json.dumps(ctx, ensure_ascii=False)},
         ])
         by_url = {c.url: c for c in candidates}
         items = tuple(

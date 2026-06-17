@@ -48,3 +48,51 @@ def test_run_report_end_to_end(tmp_path):
     report2 = run_report("research", cfg, RouterClient(), store,
                          now_ts=_NOW, sources=fake_sources, feishu_run=fake_feishu)
     assert report2.is_empty()
+
+
+def test_run_report_degrades_when_llm_fails(tmp_path):
+    cfg = _cfg(tmp_path)
+    import os
+    os.utime(os.path.join(cfg.session_records_dir, "today.md"), (_NOW, _NOW))
+    store = StateStore(cfg.state_dir)
+    class BoomClient:
+        def complete_json(self, messages, **kw):
+            raise RuntimeError("api down")
+    sent = {}
+    def fake_feishu(argv, **kw):
+        sent["argv"] = argv
+        class R: returncode = 0
+        return R()
+    report = run_report("research", cfg, BoomClient(), store,
+                        now_ts=_NOW, sources={"arxiv": lambda q: []}, feishu_run=fake_feishu)
+    assert report.is_empty()
+    assert any("DeepSeek" in n for n in report.notes)
+    assert "argv" in sent  # degraded alert WAS sent to Feishu
+
+
+def test_run_report_empty_skips_feishu(tmp_path):
+    cfg = _cfg(tmp_path)
+    import os
+    os.utime(os.path.join(cfg.session_records_dir, "today.md"), (_NOW, _NOW))
+    store = StateStore(cfg.state_dir)
+    class EmptyClient:
+        def complete_json(self, messages, **kw):
+            sysmsg = messages[0]["content"]
+            if "兴趣" in sysmsg or "提炼" in sysmsg:
+                return {"topics": ["LoRA"], "entities": [], "open_loops": [], "decisions": []}
+            if "queries" in sysmsg or "检索串" in sysmsg:
+                return {"queries": ["q"]}
+            if "novel" in sysmsg or "新的" in sysmsg:
+                return {"novel_urls": []}
+            if "情报员" in sysmsg:
+                return {"items": []}
+            return {}
+    sent = {}
+    def fake_feishu(argv, **kw):
+        sent["argv"] = argv
+        class R: returncode = 0
+        return R()
+    report = run_report("research", cfg, EmptyClient(), store,
+                        now_ts=_NOW, sources={"arxiv": lambda q: []}, feishu_run=fake_feishu)
+    assert report.is_empty()
+    assert "argv" not in sent  # no Feishu spam on a normal-empty report
