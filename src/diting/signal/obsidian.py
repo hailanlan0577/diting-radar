@@ -19,7 +19,8 @@ def collect_session_records(
             mtime = os.path.getmtime(path)
             if mtime < cutoff:
                 continue
-            text = open(path, "r", encoding="utf-8").read()
+            with open(path, "r", encoding="utf-8") as f:
+                text = f.read()
         except OSError:
             continue
         items.append(SignalItem(source="obsidian_session", text=text, mtime=mtime))

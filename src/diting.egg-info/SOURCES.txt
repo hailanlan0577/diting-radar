@@ -1,8 +1,16 @@
 pyproject.toml
 src/diting/__init__.py
+src/diting/config.py
+src/diting/llm.py
+src/diting/models.py
+src/diting/state.py
 src/diting.egg-info/PKG-INFO
 src/diting.egg-info/SOURCES.txt
 src/diting.egg-info/dependency_links.txt
 src/diting.egg-info/requires.txt
 src/diting.egg-info/top_level.txt
 tests/test_config.py
+tests/test_llm.py
+tests/test_models.py
+tests/test_obsidian.py
+tests/test_state.py
