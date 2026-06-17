@@ -19,7 +19,7 @@ class RouterClient:
         if "情报员" in sysmsg:
             return {"items": [{"url": "http://a", "title": "论文A",
                                "one_liner": "一句话", "why_it_matters": "和你 LoRA 相关"}]}
-        return {}
+        raise ValueError(f"RouterClient: unexpected prompt: {sysmsg[:80]}")
 
 def _cfg(tmp_path) -> Config:
     recs = tmp_path / "recs"; recs.mkdir()

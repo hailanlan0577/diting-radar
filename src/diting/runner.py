@@ -45,8 +45,11 @@ def run_report(lens, cfg, client, store, *, now_ts=None, sources=None,
     candidates = judge_novelty(client, candidates, build_known_context(interests, profile))
     date = time.strftime("%Y-%m-%d", time.localtime(now_ts))
     report = synthesize(client, lens, date, candidates, interests, notes)
-    write_report_to_inbox(report, cfg.vault_inbox_dir, now_ts)
-    send_to_feishu(report, cfg.feishu_target, run=feishu_run)
-    for it in report.items:
-        store.mark_pushed(it.url, it.title)
+    try:
+        write_report_to_inbox(report, cfg.vault_inbox_dir, now_ts)
+        send_to_feishu(report, cfg.feishu_target, run=feishu_run)
+        for it in report.items:
+            store.mark_pushed(it.url, it.title)
+    except Exception as e:
+        print(f"[谛听] 投递失败，未标记已推送（下次重试）：{e}")
     return report

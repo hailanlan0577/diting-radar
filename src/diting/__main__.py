@@ -1,6 +1,7 @@
 # src/diting/__main__.py
 from __future__ import annotations
 import argparse
+from pathlib import Path
 from diting.config import load_config
 from diting.llm import DeepSeekClient
 from diting.state import StateStore
@@ -18,16 +19,20 @@ def main():
     r = sub.add_parser("run"); r.add_argument("--lens", default="research")
     s = sub.add_parser("seed-profile"); s.add_argument("--from", dest="files", nargs="+", required=True)
     args = ap.parse_args()
-    cfg = load_config()
+    try:
+        cfg = load_config()
+        client = _client(cfg)
+    except (FileNotFoundError, RuntimeError) as e:
+        raise SystemExit(f"配置/密钥错误：{e}")
     if args.cmd == "run":
         store = StateStore(cfg.state_dir)
-        report = run_report(args.lens, cfg, _client(cfg), store)
+        report = run_report(args.lens, cfg, client, store)
         print(f"[{report.lens}] {report.date}: {len(report.items)} 条" +
               ("" if report.items else " — 今天这块没值得看的"))
     elif args.cmd == "seed-profile":
         store = StateStore(cfg.state_dir)
-        texts = [open(f, encoding="utf-8").read() for f in args.files]
-        prof = seed_profile(_client(cfg), texts)
+        texts = [Path(f).read_text(encoding="utf-8") for f in args.files]
+        prof = seed_profile(client, texts)
         store.save_profile(prof)
         print("关注清单已生成：", prof)
 
