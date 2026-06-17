@@ -1,0 +1,15 @@
+# config.example.yaml — 拷成 config.yaml 后填真实值
+deepseek:
+  base_url: "https://api.deepseek.com/v1"   # ✅ 已核对：Mac Studio OpenClaw 的 deepseek provider
+  model: "deepseek-v4-pro"                   # provider 里有 deepseek-v4-flash / -pro 两个，取 pro
+  api_key_env: "DEEPSEEK_API_KEY"           # 真实 key 放环境变量；值=macstudio ~/.openclaw/openclaw.json providers.deepseek.apiKey
+signal:
+  session_records_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/会话记录"
+  lookback_days: 5
+crawl:
+  searxng_url: "http://localhost:8080"      # ✅ 已核对：本机 searxng 实例
+  github_token_env: "GITHUB_TOKEN"
+deliver:
+  vault_inbox_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/Inbox"
+  feishu_target: "ou_你的openid"             # 飞书 open_id(ou_开头)，发私聊；获取方式见"手动验收"
+state_dir: "/Users/<dev-user>/diting-radar/state"
