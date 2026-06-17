@@ -1,4 +1,4 @@
-import json
+import pytest
 from diting.llm import DeepSeekClient
 
 class _FakeResp:
@@ -15,3 +15,9 @@ def test_complete_json_parses(monkeypatch):
     client = DeepSeekClient("http://x/v1", "k", "deepseek-v4-pro")
     monkeypatch.setattr(client._http, "post", lambda *a, **k: _FakeResp('{"a": 1}'))
     assert client.complete_json([{"role": "user", "content": "hi"}]) == {"a": 1}
+
+def test_complete_json_raises_on_bad_json(monkeypatch):
+    client = DeepSeekClient("http://x/v1", "k", "deepseek-v4-pro")
+    monkeypatch.setattr(client._http, "post", lambda *a, **k: _FakeResp("not-json"))
+    with pytest.raises(ValueError, match="合法 JSON"):
+        client.complete_json([{"role": "user", "content": "hi"}])
