@@ -2,9 +2,14 @@
 from __future__ import annotations
 from typing import Callable
 import re
+import logging as _logging
 from urllib.parse import quote, unquote, urlparse, parse_qs
 import trafilatura
 from diting.models import Candidate
+
+# scrapling 默认往 stderr 刷 INFO(每次抓取) + deprecation WARNING，会污染 cron 日志；
+# 只保留真正的 ERROR。fetch.py 是本项目调用 scrapling 的唯一入口。
+_logging.getLogger("scrapling").setLevel(_logging.ERROR)
 
 
 def _html_of(resp) -> str:
