@@ -17,3 +17,10 @@ def test_candidate_body_defaults_empty_and_positional_compat():
     assert c.body == ""
     c2 = Candidate("t", "http://u", "摘要", "websearch", body="正文")
     assert c2.body == "正文"
+
+def test_dig_report_empty_when_no_markdown():
+    from diting.models import DigReport
+    r = DigReport(topic="RAG", date="2026-06-18", markdown="", one_liner="", source_count=0)
+    assert r.is_empty()
+    r2 = DigReport(topic="RAG", date="2026-06-18", markdown="# 正文", one_liner="一句话", source_count=5)
+    assert not r2.is_empty()

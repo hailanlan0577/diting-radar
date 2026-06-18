@@ -14,6 +14,7 @@ class StateStore:
         self._db = os.path.join(self.dir, "pushed.db")
         self._profile = os.path.join(self.dir, "interest_profile.yaml")
         self._versions = os.path.join(self.dir, "versions.json")
+        self._dug = os.path.join(self.dir, "dug_topics.json")
         with sqlite3.connect(self._db) as c:
             c.execute("CREATE TABLE IF NOT EXISTS pushed (url TEXT PRIMARY KEY, title TEXT)")
 
@@ -57,3 +58,25 @@ class StateStore:
     def set_seen_version(self, repo: str, version: str) -> None:
         data = self._load_versions()
         self._save_versions({**data, repo: version})
+
+    def _load_dug(self) -> list[str]:
+        if not os.path.exists(self._dug):
+            return []
+        try:
+            with open(self._dug, "r", encoding="utf-8") as f:
+                return json.load(f) or []
+        except (json.JSONDecodeError, OSError):
+            return []
+
+    def is_dug(self, topic: str) -> bool:
+        return topic in self._load_dug()
+
+    def mark_dug(self, topic: str) -> None:
+        dug = self._load_dug()
+        if topic not in dug:
+            dug.append(topic)
+        try:
+            with open(self._dug, "w", encoding="utf-8") as f:
+                json.dump(dug, f, ensure_ascii=False)
+        except OSError as e:
+            print(f"[谛听] 写 dug_topics.json 失败：{e}")

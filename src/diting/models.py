@@ -41,3 +41,14 @@ class Report:
 
     def is_empty(self) -> bool:
         return len(self.items) == 0
+
+@dataclass(frozen=True)
+class DigReport:
+    topic: str
+    date: str
+    markdown: str
+    one_liner: str
+    source_count: int
+
+    def is_empty(self) -> bool:
+        return not self.markdown
