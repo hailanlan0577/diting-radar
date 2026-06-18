@@ -38,12 +38,18 @@ class StateStore:
     def _load_versions(self) -> dict[str, str]:
         if not os.path.exists(self._versions):
             return {}
-        with open(self._versions, "r", encoding="utf-8") as f:
-            return json.load(f) or {}
+        try:
+            with open(self._versions, "r", encoding="utf-8") as f:
+                return json.load(f) or {}
+        except (json.JSONDecodeError, OSError):
+            return {}
 
     def _save_versions(self, data: dict[str, str]) -> None:
-        with open(self._versions, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False)
+        try:
+            with open(self._versions, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False)
+        except OSError as e:
+            print(f"[谛听] 写 versions.json 失败（本次版本快照未保存）：{e}")
 
     def get_seen_version(self, repo: str) -> str | None:
         return self._load_versions().get(repo)

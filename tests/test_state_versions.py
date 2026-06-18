@@ -35,3 +35,16 @@ def test_versions_json_persists_across_instances(tmp_path):
 
     s2 = StateStore(str(tmp_path))
     assert s2.get_seen_version("owner/repo") == "v3.0"
+
+
+def test_corrupt_versions_json_degrades(tmp_path):
+    import os
+    s = StateStore(str(tmp_path))
+
+    # Write invalid JSON to versions.json
+    versions_file = os.path.join(str(tmp_path), "versions.json")
+    with open(versions_file, "w") as f:
+        f.write("{ this is not valid json ")
+
+    # Should not raise, should degrade and return None
+    assert s.get_seen_version("owner/repo") is None
