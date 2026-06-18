@@ -1,6 +1,8 @@
 # src/diting/sources/fetch.py
 from __future__ import annotations
 from typing import Callable
+import re
+from urllib.parse import quote, unquote, urlparse, parse_qs
 import trafilatura
 from diting.models import Candidate
 
@@ -24,6 +26,43 @@ def _scrapling_html(url: str, stealthy: bool, timeout_s: int) -> str:
         return _html_of(StealthyFetcher().fetch(url, headless=True, timeout=timeout_s * 1000))
     from scrapling.fetchers import Fetcher
     return _html_of(Fetcher().get(url, timeout=timeout_s))
+
+
+_DDG_HTML = "https://html.duckduckgo.com/html/"
+_RESULT_RE = re.compile(r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>', re.S)
+
+
+def _ddg_unwrap(href: str) -> str:
+    """DDG html 版链接形如 //duckduckgo.com/l/?uddg=<urlencoded>，解出真实 url。"""
+    if "uddg=" in href:
+        full = href if href.startswith("http") else "https:" + href
+        u = parse_qs(urlparse(full).query).get("uddg", [""])[0]
+        return unquote(u)
+    return href if href.startswith("http") else ""
+
+
+def _ddg_html(query: str, max_results: int, timeout_s: int) -> str:
+    from scrapling.fetchers import Fetcher    # 仅 Fetcher（HTTP），不碰 StealthyFetcher
+    return _html_of(Fetcher().get(f"{_DDG_HTML}?q={quote(query)}", timeout=timeout_s))
+
+
+def search_engine(query: str, *, max_results: int = 5,
+                  serp_fetcher=None, timeout_s: int = 30) -> list[Candidate]:
+    """抓搜索引擎结果作为 searxng 兜底。失败返 []（precision-first）。"""
+    serp_fetcher = serp_fetcher or _ddg_html
+    try:
+        html = serp_fetcher(query, max_results, timeout_s)
+    except Exception:
+        return []
+    out: list[Candidate] = []
+    for m in _RESULT_RE.finditer(html or ""):
+        url = _ddg_unwrap(m.group(1))
+        title = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+        if url and title:
+            out.append(Candidate(title=title, url=url, summary="", source="websearch"))
+        if len(out) >= max_results:
+            break
+    return out
 
 
 def fetch_text(url: str, *, stealthy: bool = False,
