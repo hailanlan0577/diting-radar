@@ -26,9 +26,16 @@ def main():
         raise SystemExit(f"配置/密钥错误：{e}")
     if args.cmd == "run":
         store = StateStore(cfg.state_dir)
-        report = run_report(args.lens, cfg, client, store)
-        print(f"[{report.lens}] {report.date}: {len(report.items)} 条" +
-              ("" if report.items else " — 今天这块没值得看的"))
+        if args.lens == "dig":
+            from diting.dig import run_dig
+            report = run_dig(cfg, client, store)
+            print(f"[dig] {report.date}: " +
+                  (f"深挖《{report.topic}》{report.source_count} 篇来源"
+                   if not report.is_empty() else "无新题/空，跳过"))
+        else:
+            report = run_report(args.lens, cfg, client, store)
+            print(f"[{report.lens}] {report.date}: {len(report.items)} 条" +
+                  ("" if report.items else " — 今天这块没值得看的"))
     elif args.cmd == "seed-profile":
         store = StateStore(cfg.state_dir)
         texts = [Path(f).read_text(encoding="utf-8") for f in args.files]
