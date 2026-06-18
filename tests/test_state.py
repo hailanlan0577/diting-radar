@@ -9,6 +9,6 @@ def test_pushed_dedup(tmp_path):
 
 def test_profile_roundtrip(tmp_path):
     s = StateStore(str(tmp_path))
-    assert s.load_profile() == {"stack": [], "tools": [], "topics": []}
+    assert s.load_profile() == {"stack": [], "tools": [], "topics": [], "repos": []}
     s.save_profile({"stack": ["MLX"], "tools": ["graphify"], "topics": ["LoRA"]})
     assert s.load_profile()["stack"] == ["MLX"]

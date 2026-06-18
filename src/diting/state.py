@@ -5,7 +5,7 @@ import os
 import sqlite3
 import yaml
 
-_DEFAULT_PROFILE = {"stack": [], "tools": [], "topics": []}
+_DEFAULT_PROFILE = {"stack": [], "tools": [], "topics": [], "repos": []}
 
 class StateStore:
     def __init__(self, state_dir: str):

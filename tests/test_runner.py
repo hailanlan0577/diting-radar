@@ -1,4 +1,5 @@
 import os, time
+from unittest.mock import patch
 from diting.models import Candidate
 from diting.config import Config
 from diting.state import StateStore
@@ -96,3 +97,74 @@ def test_run_report_empty_skips_feishu(tmp_path):
                         now_ts=_NOW, sources={"arxiv": lambda q: []}, feishu_run=fake_feishu)
     assert report.is_empty()
     assert "argv" not in sent  # no Feishu spam on a normal-empty report
+
+
+class TrendsClient:
+    """LLM client for trends lens: needs distill, judge_novelty, synthesize (no query-gen)."""
+    def complete_json(self, messages, **kw):
+        sysmsg = messages[0]["content"]
+        if "兴趣" in sysmsg or "提炼" in sysmsg:
+            return {"topics": ["MLX"], "entities": [], "open_loops": [], "decisions": []}
+        if "novel" in sysmsg or "新的" in sysmsg:
+            return {"novel_urls": ["https://github.com/a/b/releases/tag/v1"]}
+        if "情报员" in sysmsg:
+            return {"items": [{"url": "https://github.com/a/b/releases/tag/v1",
+                               "title": "a/b 出新版 v1",
+                               "one_liner": "大改进", "why_it_matters": "你在用 a/b"}]}
+        raise ValueError(f"TrendsClient: unexpected prompt: {sysmsg[:80]}")
+
+
+def _cfg_trends(tmp_path) -> Config:
+    recs = tmp_path / "recs"; recs.mkdir()
+    (recs / "today.md").write_text("今天在研究 MLX 框架", encoding="utf-8")
+    return Config("http://x/v1", "deepseek-v4-pro", "DS", str(recs), 5,
+                  "http://sx", "GH", str(tmp_path / "inbox"), "me", str(tmp_path / "state"))
+
+
+def test_trends_uses_release_watcher(tmp_path):
+    """trends 镜头：有新版 → 报告非空且投递飞书；无新版 → 空报告不刷飞书。"""
+    cfg = _cfg_trends(tmp_path)
+    os.utime(os.path.join(cfg.session_records_dir, "today.md"), (_NOW, _NOW))
+
+    fake_candidate = Candidate(
+        title="a/b 出新版 v1",
+        url="https://github.com/a/b/releases/tag/v1",
+        summary="大改进",
+        source="github_release",
+    )
+
+    sent = {}
+    def fake_feishu(argv, **kw):
+        sent["argv"] = argv
+        class R: returncode = 0
+        return R()
+
+    # --- scenario 1: new release → non-empty report + Feishu called ---
+    store1 = StateStore(cfg.state_dir)
+    # pre-load profile with repos so fatten_profile preserves them
+    store1.save_profile({"stack": [], "tools": [], "topics": [], "repos": ["a/b"]})
+
+    with patch("diting.runner.check_repo_release", return_value=[fake_candidate]) as mock_check:
+        report = run_report("trends", cfg, TrendsClient(), store1,
+                            now_ts=_NOW, feishu_run=fake_feishu)
+
+    assert not report.is_empty(), "新版应产生非空报告"
+    assert "argv" in sent, "飞书应被调用"
+    mock_check.assert_called_once_with("a/b", store1, token=None)
+
+    # --- scenario 2: no new version → empty report, Feishu NOT called ---
+    sent2 = {}
+    def fake_feishu2(argv, **kw):
+        sent2["argv"] = argv
+        class R: returncode = 0
+        return R()
+
+    store2 = StateStore(str(tmp_path / "state2"))
+    store2.save_profile({"stack": [], "tools": [], "topics": [], "repos": ["a/b"]})
+
+    with patch("diting.runner.check_repo_release", return_value=[]):
+        report2 = run_report("trends", cfg, TrendsClient(), store2,
+                             now_ts=_NOW, feishu_run=fake_feishu2)
+
+    assert report2.is_empty(), "无新版应产生空报告"
+    assert "argv" not in sent2, "无新版不应发飞书"

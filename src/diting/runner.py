@@ -15,6 +15,7 @@ from diting.sources.arxiv import search_arxiv
 from diting.sources.hackernews import search_hn
 from diting.sources.github import search_github_repos
 from diting.sources.websearch import search_web
+from diting.sources.github_releases import check_repo_release
 
 
 def build_sources(cfg) -> dict:
@@ -32,6 +33,28 @@ def build_known_context(interests: Interests, profile: dict) -> str:
             + "；常用栈/工具：" + "、".join(profile.get("stack", []) + profile.get("tools", [])))
 
 
+def _collect_candidates(lens: str, cfg, client, store, interests: Interests,
+                        profile: dict, sources) -> tuple[list, list[str]]:
+    """Collect raw candidates for a given lens.
+
+    trends: iterate watched repos through the release sentinel — no LLM query-gen.
+    research/loops: generate queries then crawl.
+    Returns (candidates, notes).
+    """
+    if lens == "trends":
+        token = os.environ.get(cfg.github_token_env)
+        candidates = []
+        for repo in profile.get("repos", []):
+            candidates += check_repo_release(repo, store, token=token)
+        notes: list[str] = [] if candidates else ["所有关注 repo 都没出新版"]
+        return candidates, notes
+
+    # research / loops — original path
+    queries = generate_queries(client, lens, interests, profile)
+    candidates, notes = run_crawl(queries, sources or build_sources(cfg))
+    return candidates, notes
+
+
 def run_report(lens, cfg, client, store, *, now_ts=None, sources=None,
                feishu_run=subprocess.run) -> Report:
     now_ts = now_ts if now_ts is not None else time.time()
@@ -42,8 +65,10 @@ def run_report(lens, cfg, client, store, *, now_ts=None, sources=None,
         interests = distill_interests(client, signals) if signals else Interests((), (), (), ())
         profile = fatten_profile(store.load_profile(), interests)
         store.save_profile(profile)
-        queries = generate_queries(client, lens, interests, profile)
-        candidates, notes = run_crawl(queries, sources or build_sources(cfg))
+        candidates, notes = _collect_candidates(
+            lens, cfg, client, store, interests, profile,
+            sources or build_sources(cfg),
+        )
         candidates = filter_unpushed(candidates, store)
         candidates = judge_novelty(client, candidates, build_known_context(interests, profile))
         report = synthesize(client, lens, date, candidates, interests, notes)
