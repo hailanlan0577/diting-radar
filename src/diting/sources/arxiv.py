@@ -7,7 +7,7 @@ _NS = {"a": "http://www.w3.org/2005/Atom"}
 
 def search_arxiv(query: str, max_results: int = 5, *, get=httpx.get) -> list[Candidate]:
     try:
-        resp = get("http://export.arxiv.org/api/query",
+        resp = get("https://export.arxiv.org/api/query",
                    params={"search_query": f"all:{query}", "max_results": max_results,
                            "sortBy": "submittedDate", "sortOrder": "descending"})
         resp.raise_for_status()
