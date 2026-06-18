@@ -3,8 +3,6 @@ import types
 import os
 import yaml
 
-import pytest
-
 from diting.dig import generate_dig_queries, synthesize_dig
 from diting.models import Candidate, DigReport
 from diting.state import StateStore

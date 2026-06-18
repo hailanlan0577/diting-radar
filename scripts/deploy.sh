@@ -4,7 +4,7 @@
 #   bash scripts/deploy.sh            # 跑测试 + 重装 launchd
 #   bash scripts/deploy.sh --restart  # 只重装 launchd（改了 plist/脚本）
 #   bash scripts/deploy.sh --test     # 只跑测试
-#   bash scripts/deploy.sh --run <lens>   # 立刻手动跑一个镜头（research/loops/trends）
+#   bash scripts/deploy.sh --run <lens>   # 立刻手动跑一个镜头（research/loops/trends/dig）
 
 set -euo pipefail
 
@@ -42,7 +42,7 @@ case "$MODE" in
     ok "测试通过"
     log "② 装/重装 launchd 定时..."
     bash "$REPO_ROOT/scripts/install-launchd.sh"
-    ok "部署完成：测试绿 + launchd 三时段已就位"
+    ok "部署完成：测试绿 + launchd 四时段已就位"
     log "确认：launchctl list | grep diting"
     ;;
   *)
