@@ -9,6 +9,8 @@ signal:
 crawl:
   searxng_url: "http://localhost:8080"      # ✅ 已核对：本机 searxng 实例
   github_token_env: "GITHUB_TOKEN"
+  fetch_top_n: 5                            # 每轮对去重后前 N 条候选抓正文喂大模型
+  known_antibot_domains: ["zhihu.com", "csdn.net"]  # 这些域走无头隐身抓，抓不到就跳过
 deliver:
   vault_inbox_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/Inbox"
   feishu_target: "ou_你的openid"             # 飞书 open_id(ou_开头)，发私聊；获取方式见"手动验收"

@@ -33,3 +33,29 @@ def test_api_key_missing_raises(tmp_path, monkeypatch):
     cfg = load_config(str(cfg_file))
     with pytest.raises(RuntimeError, match="NOPE_KEY"):
         _ = cfg.deepseek_api_key
+
+def test_fetch_fields_default_when_absent(tmp_path):
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text(textwrap.dedent("""
+        deepseek: {base_url: "http://x/v1", model: "m", api_key_env: "DS_KEY"}
+        signal: {session_records_dir: "/recs", lookback_days: 3}
+        crawl: {searxng_url: "http://s:8080", github_token_env: "GH"}
+        deliver: {vault_inbox_dir: "/inbox", feishu_target: "me"}
+        state_dir: "/st"
+    """))
+    cfg = load_config(str(cfg_file))
+    assert cfg.fetch_top_n == 5
+    assert cfg.known_antibot_domains == ("zhihu.com", "csdn.net")
+
+def test_fetch_fields_read_from_crawl(tmp_path):
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text(textwrap.dedent("""
+        deepseek: {base_url: "http://x/v1", model: "m", api_key_env: "DS_KEY"}
+        signal: {session_records_dir: "/recs", lookback_days: 3}
+        crawl: {searxng_url: "http://s:8080", github_token_env: "GH", fetch_top_n: 8, known_antibot_domains: ["weixin.qq.com"]}
+        deliver: {vault_inbox_dir: "/inbox", feishu_target: "me"}
+        state_dir: "/st"
+    """))
+    cfg = load_config(str(cfg_file))
+    assert cfg.fetch_top_n == 8
+    assert cfg.known_antibot_domains == ("weixin.qq.com",)

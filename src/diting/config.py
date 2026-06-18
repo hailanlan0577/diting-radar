@@ -15,6 +15,8 @@ class Config:
     vault_inbox_dir: str
     feishu_target: str
     state_dir: str
+    fetch_top_n: int = 5
+    known_antibot_domains: tuple[str, ...] = ("zhihu.com", "csdn.net")
 
     @property
     def deepseek_api_key(self) -> str:
@@ -39,6 +41,8 @@ def load_config(path: str | None = None) -> Config:
             vault_inbox_dir=raw["deliver"]["vault_inbox_dir"],
             feishu_target=raw["deliver"]["feishu_target"],
             state_dir=raw["state_dir"],
+            fetch_top_n=int(raw["crawl"].get("fetch_top_n", 5)),
+            known_antibot_domains=tuple(raw["crawl"].get("known_antibot_domains", ["zhihu.com", "csdn.net"])),
         )
     except KeyError as e:
         raise ValueError(f"配置文件缺少字段 {e}（文件：{path}）") from e
