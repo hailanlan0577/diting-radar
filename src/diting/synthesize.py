@@ -26,6 +26,9 @@ _SYSTEM_BY_LENS: dict[str, str] = {
 
 def synthesize(client, lens: str, date: str, candidates: list[Candidate],
                interests: Interests, notes: list[str] = []) -> Report:
+    def _norm(u: str) -> str:
+        return (u or "").rstrip("/")
+
     notes = list(notes)
     items: tuple[RankedItem, ...] = ()
     system = _SYSTEM_BY_LENS.get(lens, _SYSTEM_RESEARCH)
@@ -38,11 +41,11 @@ def synthesize(client, lens: str, date: str, candidates: list[Candidate],
             {"role": "system", "content": system},
             {"role": "user", "content": json.dumps(ctx, ensure_ascii=False)},
         ])
-        by_url = {c.url: c for c in candidates}
+        by_url = {_norm(c.url): c for c in candidates}
         items = tuple(
             RankedItem(title=it.get("title", ""), url=it.get("url", ""),
                        one_liner=it.get("one_liner", ""), why_it_matters=it.get("why_it_matters", ""),
-                       source=by_url.get(it.get("url", ""), Candidate("", "", "", "?")).source, lens=lens)
+                       source=by_url.get(_norm(it.get("url", "")), Candidate("", "", "", "?")).source, lens=lens)
             for it in data.get("items", []) if it.get("url")
         )
     if not items:

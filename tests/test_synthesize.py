@@ -70,3 +70,13 @@ def test_synthesize_feeds_body_when_present():
     cands = [Candidate("t", "http://a", "短摘要", "arxiv", body="正文独有词WQX")]
     synthesize(C(), "research", "2026-06-18", cands, Interests((), (), (), ()))
     assert "正文独有词WQX" in captured["user"]
+
+def test_synthesize_matches_source_despite_trailing_slash():
+    """候选 url 无斜杠，LLM 回的 url 带斜杠，应仍能匹配到正确 source，不回退 '?'。"""
+    class C:
+        def complete_json(self, messages, **kw):
+            return {"items": [{"url": "http://a/", "title": "t",
+                               "one_liner": "x", "why_it_matters": "y"}]}
+    cands = [Candidate("t", "http://a", "s", "arxiv")]   # 候选无斜杠，LLM 回带斜杠
+    rep = synthesize(C(), "research", "2026-06-18", cands, Interests((), (), (), ()))
+    assert rep.items[0].source == "arxiv"   # 不再回退 "?"
