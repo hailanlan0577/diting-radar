@@ -10,8 +10,14 @@ def check_repo_release(
     *,
     get=httpx.get,
     token: str | None = None,
-) -> list[Candidate]:
-    """Check a GitHub repo's latest release and return a Candidate only when a new version appears."""
+) -> tuple[list[Candidate], str | None]:
+    """Check a GitHub repo's latest release.
+
+    Returns (candidates, tag) where tag is the new version string when a new
+    release is found, or None otherwise.  The snapshot (versions.json) is NOT
+    advanced here — the caller must call store.set_seen_version(repo, tag)
+    AFTER successful delivery so that a failed delivery retries on the next run.
+    """
     headers = {"Accept": "application/vnd.github+json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -23,17 +29,16 @@ def check_repo_release(
         resp.raise_for_status()
         data = resp.json()
     except Exception:
-        return []
+        return [], None
 
     tag = data.get("tag_name")
     if not tag:
-        return []
+        return [], None
 
     if tag == store.get_seen_version(repo):
-        return []
+        return [], None
 
-    store.set_seen_version(repo, tag)
-
+    # Do NOT write set_seen_version here — deferred to post-delivery in runner.
     body: str = data.get("body") or ""
     name: str = data.get("name") or ""
     summary = body[:300] if body else name
@@ -45,4 +50,4 @@ def check_repo_release(
             summary=summary,
             source="github_release",
         )
-    ]
+    ], tag

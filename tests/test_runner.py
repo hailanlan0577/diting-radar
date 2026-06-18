@@ -122,7 +122,7 @@ def _cfg_trends(tmp_path) -> Config:
 
 
 def test_trends_uses_release_watcher(tmp_path):
-    """trends 镜头：有新版 → 报告非空且投递飞书；无新版 → 空报告不刷飞书。"""
+    """trends 镜头：有新版 → 报告非空且投递飞书且快照投递后推进；无新版 → 空报告不刷飞书不推进快照。"""
     cfg = _cfg_trends(tmp_path)
     os.utime(os.path.join(cfg.session_records_dir, "today.md"), (_NOW, _NOW))
 
@@ -139,20 +139,22 @@ def test_trends_uses_release_watcher(tmp_path):
         class R: returncode = 0
         return R()
 
-    # --- scenario 1: new release → non-empty report + Feishu called ---
+    # --- scenario 1: new release → non-empty report + Feishu called + snapshot advanced post-delivery ---
     store1 = StateStore(cfg.state_dir)
     # pre-load profile with repos so fatten_profile preserves them
     store1.save_profile({"stack": [], "tools": [], "topics": [], "repos": ["a/b"]})
 
-    with patch("diting.runner.check_repo_release", return_value=[fake_candidate]) as mock_check:
+    with patch("diting.runner.check_repo_release", return_value=([fake_candidate], "v1")) as mock_check:
         report = run_report("trends", cfg, TrendsClient(), store1,
                             now_ts=_NOW, feishu_run=fake_feishu)
 
     assert not report.is_empty(), "新版应产生非空报告"
     assert "argv" in sent, "飞书应被调用"
     mock_check.assert_called_once_with("a/b", store1, token=None)
+    # snapshot must be advanced AFTER successful delivery
+    assert store1.get_seen_version("a/b") == "v1", "快照应在投递成功后推进"
 
-    # --- scenario 2: no new version → empty report, Feishu NOT called ---
+    # --- scenario 2: no new version → empty report, Feishu NOT called, snapshot NOT advanced ---
     sent2 = {}
     def fake_feishu2(argv, **kw):
         sent2["argv"] = argv
@@ -162,9 +164,10 @@ def test_trends_uses_release_watcher(tmp_path):
     store2 = StateStore(str(tmp_path / "state2"))
     store2.save_profile({"stack": [], "tools": [], "topics": [], "repos": ["a/b"]})
 
-    with patch("diting.runner.check_repo_release", return_value=[]):
+    with patch("diting.runner.check_repo_release", return_value=([], None)):
         report2 = run_report("trends", cfg, TrendsClient(), store2,
                              now_ts=_NOW, feishu_run=fake_feishu2)
 
     assert report2.is_empty(), "无新版应产生空报告"
     assert "argv" not in sent2, "无新版不应发飞书"
+    assert store2.get_seen_version("a/b") is None, "无新版不应推进快照"
