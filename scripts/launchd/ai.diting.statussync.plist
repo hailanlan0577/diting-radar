@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 装在【MacBook】(推送方)，不是 Mac Studio。每天 09:30(谛听 10:00 research 前)把本机
+     各项目救命套件 STATUS/ONBOARDING 推到 Mac Studio:~/project-status/。
+     装：launchctl load -w ~/Library/LaunchAgents/ai.diting.statussync.plist -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>ai.diting.statussync</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/<dev-user>/diting-radar/scripts/sync-status-to-studio.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>30</integer>
+  </dict>
+  <key>StandardOutPath</key>
+  <string>/Users/<dev-user>/diting-radar/state/statussync.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/<dev-user>/diting-radar/state/statussync.err</string>
+</dict>
+</plist>

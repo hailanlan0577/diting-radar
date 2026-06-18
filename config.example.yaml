@@ -6,6 +6,11 @@ deepseek:
 signal:
   session_records_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/会话记录"
   lookback_days: 5
+  # 额外读这些高价值项目目录的近期文档当兴趣信号（每篇截断 1500 字+带文件名，自动排除谛听自产出"谛听情报/谛听深挖"）
+  extra_doc_dirs:
+    - "/Users/你/.../claude/二奢软件"     # 你写的设计/复盘/项目笔记目录，按需增减
+    - "/Users/你/project-status"          # 各机器项目仓库 STATUS 汇集（scripts/sync-status-to-studio.sh 在源机推送）
+  extra_lookback_days: 14                  # 项目文档往回看更长（项目脉络比对话跨度长），最多取最新 12 篇
 crawl:
   searxng_url: "http://localhost:8080"      # ✅ 已核对：本机 searxng 实例
   github_token_env: "GITHUB_TOKEN"
