@@ -10,7 +10,7 @@ _SYSTEM = (
 )
 
 
-def distill_interests(client, items: list[SignalItem], max_chars: int = 24000) -> Interests:
+def distill_interests(client, items: list[SignalItem], max_chars: int = 40000) -> Interests:
     corpus = "\n\n---\n\n".join(i.text for i in items)[:max_chars]
     data = client.complete_json([
         {"role": "system", "content": _SYSTEM},

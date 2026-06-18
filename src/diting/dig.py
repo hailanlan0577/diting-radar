@@ -4,7 +4,7 @@ import json
 import subprocess
 import time
 from diting.models import Candidate, DigReport, Interests
-from diting.signal.obsidian import collect_session_records
+from diting.signal.obsidian import collect_session_records, collect_documents
 from diting.signal.distill import distill_interests
 from diting.signal.dig_topics import select_dig_topic
 from diting.sources.fetch import search_engine, fetch_text
@@ -64,7 +64,8 @@ def run_dig(cfg, client, store, *, now_ts=None, search=None, fetch=None,
     search = search or search_engine
     fetch = fetch or fetch_text
     try:
-        signals = collect_session_records(cfg.session_records_dir, cfg.lookback_days, now_ts)
+        signals = (collect_session_records(cfg.session_records_dir, cfg.lookback_days, now_ts)
+                   + collect_documents(cfg.extra_doc_dirs, cfg.extra_lookback_days, now_ts))
         interests = distill_interests(client, signals) if signals else Interests((), (), (), ())
         topic = select_dig_topic(store, interests, cfg.dig_queue_path)
         if topic is None:

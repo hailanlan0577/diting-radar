@@ -63,6 +63,7 @@ def _dig_cfg(tmp_path, queue_topics=("RAG 新做法",)):
     qp.write_text(yaml.safe_dump(list(queue_topics), allow_unicode=True), encoding="utf-8")
     return types.SimpleNamespace(
         session_records_dir=str(recs), lookback_days=5,
+        extra_doc_dirs=(), extra_lookback_days=14,
         dig_queue_path=str(qp), dig_max_sources=12, known_antibot_domains=(),
         dig_vault_dir=str(tmp_path / "vault"), feishu_target="ou_me",
     )

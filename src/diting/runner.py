@@ -2,7 +2,7 @@
 from __future__ import annotations
 import os, time, subprocess
 from diting.models import Interests, Report
-from diting.signal.obsidian import collect_session_records
+from diting.signal.obsidian import collect_session_records, collect_documents
 from diting.signal.distill import distill_interests
 from diting.signal.profile import fatten_profile
 from diting.query import generate_queries
@@ -69,7 +69,8 @@ def run_report(lens, cfg, client, store, *, now_ts=None, sources=None,
     # pending maps repo -> new_tag for trends snapshots awaiting post-delivery commit.
     pending: dict[str, str] = {}
     try:
-        signals = collect_session_records(cfg.session_records_dir, cfg.lookback_days, now_ts)
+        signals = (collect_session_records(cfg.session_records_dir, cfg.lookback_days, now_ts)
+                   + collect_documents(cfg.extra_doc_dirs, cfg.extra_lookback_days, now_ts))
         interests = distill_interests(client, signals) if signals else Interests((), (), (), ())
         profile = fatten_profile(store.load_profile(), interests)
         store.save_profile(profile)
