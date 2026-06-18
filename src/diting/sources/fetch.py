@@ -29,7 +29,8 @@ def _scrapling_html(url: str, stealthy: bool, timeout_s: int) -> str:
 
 
 _DDG_HTML = "https://html.duckduckgo.com/html/"
-_RESULT_RE = re.compile(r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>', re.S)
+_RESULT_RE = re.compile(r'<a\b([^>]*)>(.*?)</a>', re.S)
+_HREF_RE = re.compile(r'href="([^"]+)"')
 
 
 def _ddg_unwrap(href: str) -> str:
@@ -56,8 +57,14 @@ def search_engine(query: str, *, max_results: int = 5,
         return []
     out: list[Candidate] = []
     for m in _RESULT_RE.finditer(html or ""):
-        url = _ddg_unwrap(m.group(1))
-        title = re.sub(r"<[^>]+>", "", m.group(2)).strip()
+        attrs, inner = m.group(1), m.group(2)
+        if "result__a" not in attrs:
+            continue
+        hm = _HREF_RE.search(attrs)
+        if not hm:
+            continue
+        url = _ddg_unwrap(hm.group(1))
+        title = re.sub(r"<[^>]+>", "", inner).strip()
         if url and title:
             out.append(Candidate(title=title, url=url, summary="", source="websearch"))
         if len(out) >= max_results:

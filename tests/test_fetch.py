@@ -25,6 +25,10 @@ _DDG = (
     '<a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fgithub.com%2Ffoo%2Fbar">A Repo</a>'
 )
 
+_DDG_HREF_FIRST = (
+    '<a href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.org%2Fx" class="result__a">Href First</a>'
+)
+
 def test_search_engine_parses_ddg():
     out = search_engine("rag", serp_fetcher=lambda q, n, t: _DDG)
     urls = [c.url for c in out]
@@ -38,3 +42,10 @@ def test_search_engine_empty_on_exception():
 def test_search_engine_respects_max_results():
     out = search_engine("rag", max_results=1, serp_fetcher=lambda q, n, t: _DDG)
     assert len(out) == 1
+
+def test_search_engine_href_before_class():
+    """href 属性在 class 之前时，解析结果应与 class 在前一致。"""
+    out = search_engine("x", serp_fetcher=lambda q, n, t: _DDG_HREF_FIRST)
+    assert len(out) == 1
+    assert out[0].url == "https://example.org/x"
+    assert out[0].title == "Href First"
