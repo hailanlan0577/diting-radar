@@ -5,7 +5,7 @@
 
 ## 🎯 一句话
 
-谛听 v1+v2 全部上线，三镜头 + launchd 三时段定时已激活、自动跑着；飞书+Obsidian 双通道实测送达。**无硬阻塞**，下一步是 v3 打磨/增强。
+谛听 v1+v2 全部上线，4 镜头 + launchd 四时段定时**已于 2026-06-18 迁到 Mac Studio（<run-user>，24h 开机）自动跑**；MacBook 定时已停。飞书+Obsidian 双通道实测送达。**无硬阻塞**，下一步是 v3 打磨/增强。
 
 ## 📊 Phase 完成度
 
@@ -56,6 +56,14 @@
 
 ## 📝 2026-06-18 做了什么
 
+### 2026-06-18（🚚 迁移到 Mac Studio 完成 ✅）
+
+1. ✅ **8 步 A-H 全过**：rsync 代码 → uv 建 venv 装依赖 → config/run-lens 路径换 <run-user> + key 改读本地 openclaw → lark-cli 配飞书 → 同步 state 去重历史 → 装 4 launchd → 停 MacBook launchd → research(3条)+dig(12篇) 真跑验收。
+2. 🐛 **坑1：scrapling 0.4.9 的 Fetcher(HTTP) 有隐藏依赖链** —— `from scrapling.fetchers import Fetcher` 缺 playwright→browserforge→curl_cffi 任一即 ModuleNotFoundError，搜索/抓正文静默失效（被 except 兜底返空：research 靠 arxiv/hn/github API 兜底没暴露，dig 全靠搜索就垮）。修：venv 补装这三个 + 写进 `pyproject.toml` dependencies 固化。
+3. 🐛 **坑2：Mac Studio 直连 DuckDuckGo 被墙** —— 必须走 mihomo 代理 `127.0.0.1:7890`。修：`fetch.py` 加 `_proxy()` 读环境变量 `DITING_FETCH_PROXY`，Mac Studio 的 run-lens.sh 设上（DeepSeek 国内直连/飞书走 lark-cli 都不读这变量，互不影响）。MacBook 不设=直连，原行为不变。
+4. ✅ **飞书配置免浏览器授权**：lark-cli 钥匙串存的是加密主钥（master.key）非明文密钥，导不出；改用 `config init --app-id cli_REDACTED --app-secret-stdin`（用户从开放平台复制 App Secret），机器人身份纯靠密钥换租户令牌，**没用上 device flow 浏览器授权**。
+5. 📌 **隐身抓取 StealthyFetcher 仍不可用**（缺 playwright chromium 二进制），反爬域(知乎/CSDN)继续跳过，与 MacBook 行为一致。dig 用 HTTP Fetcher 不受影响。
+
 ### 2026-06-18（阶段二 dig 自动深挖镜头上线 ✅）
 
 1. ✅ **新增 dig 自动深挖镜头**：每天 20:00 自动挑一个话题（想挖清单 `state/dig_queue.yaml` 优先 → 空了从兴趣自动选 → 已挖去重 → 无题跳过），多角度搜 + 深抓正文 → DeepSeek 综合成结构化中文长资料 → 落 Obsidian `谛听深挖/`（reference-manual）+ 飞书短通知。复用阶段一抓取内核，走独立 `run_dig` 入口。
@@ -103,13 +111,15 @@
 
 ## 🎯 下次进来第一件事
 
-**🚚 把谛听迁移到 Mac Studio**（用户拍板 2026-06-18：MacBook 会合盖/关机，定点任务 10/14/18/20 漏跑；Mac Studio 24h 开机才对）。按 runbook 一步步做：
+**✅ 迁移 Mac Studio 已完成（2026-06-18 22:25）** —— 4 镜头跑在 Mac Studio（<run-user>），MacBook 定时已停、plist 保留可回滚。research 真跑爬 3 条 + dig 真跑 12 篇来源长资料，飞书+Obsidian 双通道实测通。
 
-→ **`docs/superpowers/plans/2026-06-18-diting-migrate-to-macstudio.md`**（8 步 A-H，Mac Studio 环境已 ssh 核实：python3.11/uv/git/同 iCloud vault/openclaw key 都就绪；缺 lark-cli/searxng）
+可选下一步：
+1. **观察明天（10/14/18/20）Mac Studio 自动跑的效果** —— 看飞书有没有按点收到情报
+2. **v3 打磨/增强**（反馈闭环 / searxng 代理 / `来源:?` cosmetic）
+3. **隐身抓取**（StealthyFetcher）想在 Mac Studio 启用需补 `playwright install chromium`（dig 用 HTTP Fetcher 不需要，留作可选）
 
-**关键**：唯一卡用户的是步骤 D（飞书 lark-cli 登录授权）——迁移前先跟用户约好时间。迁完按计划末尾改 ONBOARDING/CLAUDE/Obsidian 手册的"部署目标"为 Mac Studio。
-
-⚠️ 迁移完成前 **MacBook 这台仍在跑**（4 个 launchd 还活着），别提前停；步骤 G 才停。
+> ⚠️ **改谛听代码的流程变了**：MacBook `/Users/<dev-user>/diting-radar` 仍是开发+测试+commit/push 的主分支 → 改完 `rsync src/ scripts/ 到 macstudio` → 如改了 plist 再 `ssh macstudio` 重装 launchd。详见 CLAUDE.md「部署工作流」。
+> 回滚：MacBook `for l in research loops trends dig; do launchctl load -w ~/Library/LaunchAgents/ai.diting.$l.plist; done` + Mac Studio 对应 unload。
 
 ---
 

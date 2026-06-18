@@ -1,6 +1,7 @@
 # src/diting/sources/fetch.py
 from __future__ import annotations
 from typing import Callable
+import os
 import re
 from urllib.parse import quote, unquote, urlparse, parse_qs
 import trafilatura
@@ -12,6 +13,12 @@ def _quiet_scrapling() -> None:
     在每次实际用到 scrapling（import 之后）调用本函数压回 ERROR，避免污染 cron 日志。"""
     import logging as _lg
     _lg.getLogger("scrapling").setLevel(_lg.ERROR)
+
+
+def _proxy() -> str | None:
+    """搜索/抓取走的出网代理（如 Mac Studio 经 mihomo 出墙）。
+    环境变量 DITING_FETCH_PROXY 未设则返 None（直连，MacBook 原行为不变）。"""
+    return os.environ.get("DITING_FETCH_PROXY") or None
 
 
 def _html_of(resp) -> str:
@@ -34,7 +41,7 @@ def _scrapling_html(url: str, stealthy: bool, timeout_s: int) -> str:
         return _html_of(StealthyFetcher().fetch(url, headless=True, timeout=timeout_s * 1000))
     from scrapling.fetchers import Fetcher
     _quiet_scrapling()
-    return _html_of(Fetcher().get(url, timeout=timeout_s))
+    return _html_of(Fetcher().get(url, timeout=timeout_s, proxy=_proxy()))
 
 
 _DDG_HTML = "https://html.duckduckgo.com/html/"
@@ -54,7 +61,7 @@ def _ddg_unwrap(href: str) -> str:
 def _ddg_html(query: str, max_results: int, timeout_s: int) -> str:
     from scrapling.fetchers import Fetcher    # 仅 Fetcher（HTTP），不碰 StealthyFetcher
     _quiet_scrapling()
-    return _html_of(Fetcher().get(f"{_DDG_HTML}?q={quote(query)}", timeout=timeout_s))
+    return _html_of(Fetcher().get(f"{_DDG_HTML}?q={quote(query)}", timeout=timeout_s, proxy=_proxy()))
 
 
 def search_engine(query: str, *, max_results: int = 5,

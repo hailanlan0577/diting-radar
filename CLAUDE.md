@@ -6,34 +6,46 @@
 
 ## 一句话
 
-谛听：每天读你做过的事 → DeepSeek V4 Pro 蒸出兴趣 → 爬全网 → 砍已知 → 合成"为何重要"的技术情报 → 飞书 + Obsidian 双通道。Python 3.11，跑本机 launchd，服务用户本人。
+谛听：每天读你做过的事 → DeepSeek V4 Pro 蒸出兴趣 → 爬全网 → 砍已知 → 合成"为何重要"的技术情报 → 飞书 + Obsidian 双通道。Python 3.11，**运行在 Mac Studio（<run-user>）launchd**（2026-06-18 从 MacBook 迁来），服务用户本人。
 
-## 🔴 地理：源码在哪，部署在哪
+## 🔴 地理：源码在哪，运行在哪（2026-06-18 迁移后）
 
 | 位置 | 角色 | 路径 |
 |------|------|------|
-| **本地 MacBook** | 源码主分支（唯一） | `/Users/<dev-user>/diting-radar` |
+| **MacBook（开发机）** | 源码主分支 + 开发/测试/commit | `/Users/<dev-user>/diting-radar`（framework python） |
+| **Mac Studio（运行机 <run-user>，24h）** | **实际跑 launchd 的地方** | `/Users/<run-user>/diting-radar`（venv `.venv/bin/python`）+ `~/Library/LaunchAgents/ai.diting.*.plist` |
 | **GitHub** | 远程备份 | `https://github.com/hailanlan0577/diting-radar`（private） |
-| **部署目标** | 本机 launchd 定时 | `~/Library/LaunchAgents/ai.diting.{research,loops,trends,dig}.plist` |
+
+> 开发在 MacBook，运行在 Mac Studio（SSH 别名 `macstudio`）。改代码流程见下方「部署工作流」。
 
 **禁忌：**
-- ❌ 不要用裸 `python`（alias 到 framework，不是 venv）—— 用全路径 `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3` 或 `python -m pip`
+- ❌ **MacBook 上**不要用裸 `python`（alias 到 framework）—— 用全路径 `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3`；**Mac Studio 上**用 venv `~/diting-radar/.venv/bin/python`
 - ❌ 飞书发消息不要漏 `--as bot`（否则进看不到的自聊）
 - ❌ 不要把 `config.yaml` / `~/.diting.env` 推 git
+- ❌ **Mac Studio 的 scrapling Fetcher 依赖 playwright+browserforge+curl_cffi**（已装+写进 pyproject）；**搜索抓取必须走代理** `DITING_FETCH_PROXY=http://127.0.0.1:7890`（直连 DDG 被墙，run-lens.sh 已设）。MacBook 直连、不设此变量
 
-## 🔧 "部署"工作流（本机 launchd，无远程）
+## 🔧 部署工作流（开发 MacBook → 运行 Mac Studio）
 
-谛听跑在本机，没有远程服务器。"部署"= 装/重装 launchd 定时 + 跑测试。
+改代码在 MacBook，跑在 Mac Studio。改完同步过去：
 
 ```bash
+# 1) MacBook：改代码 + 测试 + commit/push
 cd /Users/<dev-user>/diting-radar
-# 跑测试 + 重装定时
-bash scripts/deploy.sh
-# 只重装 launchd（改了 plist/脚本）
-bash scripts/deploy.sh --restart
-# 立刻手动触发一个镜头（验证）
-bash scripts/run-lens.sh research
+/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m pytest -q
+git add -A && git commit -m "..." && git push
+
+# 2) 同步到 Mac Studio（排除 venv/日志）
+rsync -av --exclude '.venv' --exclude 'state/cron-*.log' src/ scripts/ pyproject.toml macstudio:~/diting-radar/
+
+# 3) 如改了依赖：Mac Studio 重装；如改了 plist：重装 launchd（plist 路径须 /Users/<run-user>）
+ssh macstudio 'cd ~/diting-radar && export PATH=$HOME/.local/bin:$PATH && uv pip install --python .venv/bin/python -e .'
+ssh macstudio 'cd ~/diting-radar && bash scripts/install-launchd.sh'
+
+# 4) 立刻手动触发验证
+ssh macstudio 'bash -l -c "cd ~/diting-radar && bash scripts/run-lens.sh research; tail -15 state/cron-research.log"'
 ```
+
+> ⚠️ Mac Studio 的 `config.yaml` 和 `scripts/run-lens.sh` 是迁移时定制的（路径 <run-user>、key 读本地 openclaw、设 DITING_FETCH_PROXY）。**rsync 同步代码时别拿 MacBook 版覆盖这两个文件**（上面命令 src/ scripts/ 会覆盖 run-lens.sh —— 改完确认它仍是 Mac Studio 版，或单独维护）。
 
 ## ⏰ 自动定时（核心）
 
@@ -44,21 +56,21 @@ bash scripts/run-lens.sh research
 | 18:00 | 🛰️ trends | `run-lens.sh trends` |
 | 20:00 | 🔬 dig（深挖） | `run-lens.sh dig` |
 
-每个 job 跑 `scripts/run-lens.sh <lens>`：从 `~/.diting.env`(chmod600，存 `DEEPSEEK_API_KEY`)读 key（不依赖 ssh），跑 `python -m diting run --lens <lens>`，日志写 `state/cron-<lens>.log`。
+每个 job 跑 `scripts/run-lens.sh <lens>`（在 Mac Studio）：从本地 `~/.openclaw/openclaw.json` 读 DeepSeek key（不依赖 ssh），设 `DITING_FETCH_PROXY` 让搜索抓取走代理，跑 `.venv/bin/python -m diting run --lens <lens>`，日志写 `state/cron-<lens>.log`。
 
 ## 🏗️ 关键外部服务
 
 | 服务 | 地址 | 用途 |
 |------|------|------|
 | DeepSeek V4 Pro | `https://api.deepseek.com/v1`（model `deepseek-v4-pro`） | 全程 LLM（蒸馏/查询/合成） |
-| searxng | `http://localhost:8080` | 元搜索（上游引擎可能要代理，目前 websearch 常空） |
-| 飞书 lark-cli | 系统 `/opt/homebrew/bin/lark-cli` | 投递（皇后的小跟班 bot，`--as bot`） |
+| searxng | `http://localhost:8080`（Mac Studio 没装）| 元搜索；空了走 DDG 兜底（DDG 经 `DITING_FETCH_PROXY=127.0.0.1:7890` 出墙）|
+| 飞书 lark-cli | 系统 `/opt/homebrew/bin/lark-cli`（app `cli_REDACTED`/luxury-path4）| 投递（皇后的小跟班 bot，`--as bot`，纯密钥换租户令牌无需 user 登录）|
 | Obsidian Inbox | `…/iCloud~md~obsidian/Documents/claude/Inbox` | 投递存档 |
 
 ## 🧱 技术栈
 
 - Python 3.11（用全路径 framework python，见禁忌）
-- httpx（HTTP）/ pyyaml（配置）/ sqlite3（去重库）/ trafilatura（正文抽取，依赖 `lxml_html_clean`）/ scrapling（抓正文 + DuckDuckGo 兜底搜索；隐身 `StealthyFetcher` 本机暂不可用，反爬域跳过）/ pytest（91 测试）
+- httpx（HTTP）/ pyyaml（配置）/ sqlite3（去重库）/ trafilatura（正文抽取，依赖 `lxml_html_clean`）/ scrapling（抓正文 + DuckDuckGo 兜底搜索；**Fetcher 隐藏依赖 playwright+browserforge+curl_cffi 已写进 pyproject**；隐身 `StealthyFetcher` 缺 chromium 暂不可用，反爬域跳过）/ pytest（91 测试）
 - DeepSeek V4 Pro（OpenAI 兼容）
 
 ## 🗂️ 代码地图
@@ -97,12 +109,12 @@ diting-radar/
 ## 🧪 检查健康
 
 ```bash
-# launchd 三任务在不在
-launchctl list | grep diting
-# 全套测试
+# launchd 4 任务在不在（在 Mac Studio 上看）
+ssh macstudio 'launchctl list | grep diting'
+# 全套测试（MacBook 开发机）
 /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m pytest -q
-# 最近自动跑的结果
-tail -10 state/cron-research.log state/cron-loops.log state/cron-trends.log
+# 最近自动跑的结果（Mac Studio）
+ssh macstudio 'tail -10 ~/diting-radar/state/cron-research.log ~/diting-radar/state/cron-dig.log'
 ```
 
 ## 🔑 敏感文件（已 gitignore，永不入库）

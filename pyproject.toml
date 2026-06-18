@@ -2,7 +2,18 @@
 name = "diting"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["httpx>=0.27", "pyyaml>=6.0", "trafilatura>=1.12", "lxml_html_clean>=0.1", "scrapling>=0.4.9"]
+dependencies = [
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "trafilatura>=1.12",
+    "lxml_html_clean>=0.1",
+    "scrapling>=0.4.9",
+    # scrapling 0.4.9 的 Fetcher(HTTP) 隐藏运行时依赖：不装则 `from scrapling.fetchers import Fetcher`
+    # 直接 ModuleNotFoundError（playwright→browserforge→curl_cffi 链式缺一不可），搜索/抓正文全失效。
+    "playwright>=1.58",
+    "browserforge>=1.2",
+    "curl_cffi>=0.11",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

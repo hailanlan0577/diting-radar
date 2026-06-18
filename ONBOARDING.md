@@ -21,10 +21,10 @@
 
 | 维度 | 答案 |
 |------|------|
-| **源码唯一主分支** | `/Users/<dev-user>/diting-radar`（main 分支） |
+| **源码主分支（开发）** | MacBook `/Users/<dev-user>/diting-radar`（main 分支，framework python） |
+| **运行机（部署）** | **Mac Studio（<run-user>，24h 开机）** `/Users/<run-user>/diting-radar`（venv），SSH `macstudio`，launchd 四时段 |
 | **远程备份** | `https://github.com/hailanlan0577/diting-radar`（private） |
-| **部署目标** | 本地 Mac，launchd 三时段定时（已激活，无远程服务器） |
-| **用户操作系统** | macOS Darwin 25，MacBook Pro M1 Max 64GB |
+| **用户操作系统** | macOS Darwin 25；开发机 MacBook Pro M1 Max 64GB，运行机 Mac Studio |
 
 ### 🚫 N 大禁忌（已踩过的坑，绝不能再犯）
 
@@ -33,6 +33,7 @@
 3. **trends 镜头依赖 `state/interest_profile.yaml` 的 `repos:`** —— 不种 repo 它就空转。爬源都"降级返 []"，所以坏 repo 不报错只是没结果。（2026-06-18）
 4. **scrapling 两个坑**（2026-06-18 阶段一）：(a) `StealthyFetcher`(反爬隐身) 本机 import 即报错(browserforge: No headers can be generated)，故 `sources/fetch.py` 把它和 `Fetcher`(HTTP) **分开 import**，反爬域(知乎/CSDN)抓不到就跳过；(b) scrapling 的 `setup_logger()`(@lru_cache) 在 import 时把 `scrapling` logger 设回 INFO 刷 stderr，因 fetch.py 是函数内 lazy import，**必须在每处 scrapling import 之后调 `_quiet_scrapling()` 压回 ERROR** 才不污染 cron 日志。另：`Fetcher.get` 的 timeout 单位是**秒**不是毫秒。
 5. **dig 镜头选题**（2026-06-18 阶段二）：往 `state/dig_queue.yaml` 写 `- "话题"` 优先深挖；空了从兴趣自动选；已挖记进 `state/dug_topics.json` 去重；无题当天跳过。dig 走**独立 `run_dig`**（不复用 run_report），投递成功才 `mark_dug`。
+6. **Mac Studio 运行环境两坑**（2026-06-18 迁移）：(a) scrapling 0.4.9 的 `Fetcher`(HTTP) 隐藏依赖 **playwright+browserforge+curl_cffi**，缺任一 import 即崩、搜索抓取静默失效（已写进 pyproject + venv 装好）；(b) 直连 DuckDuckGo 被墙，**搜索抓取必须走 mihomo 代理** `DITING_FETCH_PROXY=http://127.0.0.1:7890`（run-lens.sh 已设；DeepSeek/飞书不读此变量）。**`无新题/空，跳过`这句歧义**：既可能真没题，也可能搜索抓不到来源（空报告）——排查 dig 先确认搜索通不通。
 
 ---
 
@@ -50,12 +51,12 @@
 |-------|------|------|
 | 0 基础设施 | ✅ | 仓库/53 测试绿/GitHub 私有仓/launchd 定时 |
 | 1 引擎 + 科研雷达 (v1) | ✅ | 信号→蒸馏→爬→去重→合成→飞书+Obsidian 端到端，真跑验收过 |
-| 2 三镜头 + 定时 (v2) | ✅ | loops/trends 镜头 + launchd 10/14/18 三时段，已激活 |
+| 2 四镜头 + 定时 (v2) | ✅ | loops/trends/**dig** 镜头 + launchd 10/14/18/20 四时段，**已迁 Mac Studio 跑** |
 | 3 反馈闭环 + 中文源 + 二奢镜头 (v3) | ⏳ | 未启动 |
 
 ### 🔴 当前阻塞 / 主攻目标
 
-**无硬阻塞**——谛听已上线自动跑。可选打磨项见下方"下一步候选"。
+**无硬阻塞**——谛听已于 2026-06-18 迁到 Mac Studio（<run-user>，24h 开机）自动跑，4 镜头真跑验收通过。可选打磨项见下方"下一步候选"。
 
 ---
 
@@ -86,18 +87,13 @@
 ## 🛠️ 常用操作速查
 
 ```bash
-# 手动跑一个镜头（research/loops/trends）
-/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m diting run --lens research
-# （需先 export DEEPSEEK_API_KEY；或用 launchd 同款脚本自动取 key）
-bash scripts/run-lens.sh research
+# 手动跑一个镜头（在 Mac Studio，research/loops/trends/dig）
+ssh macstudio 'bash -l -c "cd ~/diting-radar && bash scripts/run-lens.sh research; tail -20 state/cron-research.log"'
 
-# 看自动任务日志
-tail -20 state/cron-research.log
+# 确认 launchd 4 定时还在（Mac Studio）
+ssh macstudio 'launchctl list | grep diting'
 
-# 确认 launchd 定时还在
-launchctl list | grep diting
-
-# 全套测试
+# 全套测试（MacBook 开发机）
 /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m pytest -q
 ```
 
@@ -107,6 +103,7 @@ launchctl list | grep diting
 
 1. **2026-06-18**: 多个子代理报"full suite XX 通过"其实没真跑全（websearch 因 lxml_html_clean 缺失收集失败）。教训：控制器要自己 `python -m pytest -q` 核实真实数，别全信子代理报告。
 2. **2026-06-18**: 一开始飞书发不出（自聊不可见）、key 装错解释器（python alias 坑）——见禁忌 1、2。
+3. **2026-06-18 迁移**: dig 在 Mac Studio "无新题/空，跳过"折腾半天——根因是 scrapling Fetcher 缺 playwright/browserforge（import 即崩，搜索静默返空）+ DDG 直连被墙要走代理。教训：dig 空时先单独测 `search_engine`/`Fetcher import` 而不是怀疑选题逻辑——见禁忌 6。
 
 ---
 
