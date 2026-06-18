@@ -20,3 +20,13 @@ def test_judge_novelty_empty_input_short_circuits():
     class Boom:
         def complete_json(self, *a, **k): raise AssertionError("不该调 LLM")
     assert judge_novelty(Boom(), [], "ctx") == []
+
+def test_judge_novelty_uses_body_when_present():
+    captured = {}
+    class C:
+        def complete_json(self, messages, **kw):
+            captured["user"] = messages[1]["content"]
+            return {"novel_urls": ["http://a"]}
+    cands = [Candidate("t", "http://a", "短摘要", "arxiv", body="完整正文关键词ZYX")]
+    judge_novelty(C(), cands, "ctx")
+    assert "完整正文关键词ZYX" in captured["user"]

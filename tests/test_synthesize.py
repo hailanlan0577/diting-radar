@@ -60,3 +60,13 @@ def test_synthesize_loops_lens_uses_loops_system_prompt():
     assert "decisions" in user_ctx, "ctx 缺少 decisions 字段"
     assert "选用 Qdrant 作为向量数据库" in user_ctx["decisions"], \
         f"decisions 未在 ctx 中: {user_ctx.get('decisions')}"
+
+def test_synthesize_feeds_body_when_present():
+    captured = {}
+    class C:
+        def complete_json(self, messages, **kw):
+            captured["user"] = messages[1]["content"]
+            return {"items": []}
+    cands = [Candidate("t", "http://a", "短摘要", "arxiv", body="正文独有词WQX")]
+    synthesize(C(), "research", "2026-06-18", cands, Interests((), (), (), ()))
+    assert "正文独有词WQX" in captured["user"]

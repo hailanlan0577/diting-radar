@@ -14,7 +14,7 @@ _SYSTEM = (
 def judge_novelty(client, candidates: list[Candidate], known_context: str = "") -> list[Candidate]:
     if not candidates:
         return []
-    listing = "\n".join(f"- {c.url} | {c.title} | {c.summary[:160]}" for c in candidates)
+    listing = "\n".join(f"- {c.url} | {c.title} | {(c.body or c.summary)[:600]}" for c in candidates)
     data = client.complete_json([
         {"role": "system", "content": _SYSTEM},
         {"role": "user", "content": f"用户已知背景：\n{known_context}\n\n候选：\n{listing}"},

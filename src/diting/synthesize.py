@@ -32,7 +32,7 @@ def synthesize(client, lens: str, date: str, candidates: list[Candidate],
     if candidates:
         ctx = {"topics": list(interests.topics), "open_loops": list(interests.open_loops),
                "decisions": list(interests.decisions),
-               "candidates": [{"url": c.url, "title": c.title, "summary": c.summary[:300],
+               "candidates": [{"url": c.url, "title": c.title, "summary": (c.body or c.summary)[:600],
                                "source": c.source} for c in candidates]}
         data = client.complete_json([
             {"role": "system", "content": system},
