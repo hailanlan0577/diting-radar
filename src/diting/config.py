@@ -17,6 +17,9 @@ class Config:
     state_dir: str
     fetch_top_n: int = 5
     known_antibot_domains: tuple[str, ...] = ("zhihu.com", "csdn.net")
+    dig_vault_dir: str = ""
+    dig_max_sources: int = 12
+    dig_queue_path: str = ""
 
     @property
     def deepseek_api_key(self) -> str:
@@ -43,6 +46,9 @@ def load_config(path: str | None = None) -> Config:
             state_dir=raw["state_dir"],
             fetch_top_n=int(raw["crawl"].get("fetch_top_n", 5)),
             known_antibot_domains=tuple(raw["crawl"].get("known_antibot_domains", ["zhihu.com", "csdn.net"])),
+            dig_vault_dir=raw["deliver"].get("dig_vault_dir", raw["deliver"]["vault_inbox_dir"]),
+            dig_max_sources=int(raw["deliver"].get("dig_max_sources", 12)),
+            dig_queue_path=raw.get("dig_queue_path", os.path.join(raw["state_dir"], "dig_queue.yaml")),
         )
     except KeyError as e:
         raise ValueError(f"配置文件缺少字段 {e}（文件：{path}）") from e

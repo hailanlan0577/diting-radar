@@ -59,3 +59,30 @@ def test_fetch_fields_read_from_crawl(tmp_path):
     cfg = load_config(str(cfg_file))
     assert cfg.fetch_top_n == 8
     assert cfg.known_antibot_domains == ("weixin.qq.com",)
+
+def test_dig_fields_default_when_absent(tmp_path):
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text(textwrap.dedent("""
+        deepseek: {base_url: "http://x/v1", model: "m", api_key_env: "DS_KEY"}
+        signal: {session_records_dir: "/recs", lookback_days: 3}
+        crawl: {searxng_url: "http://s:8080", github_token_env: "GH"}
+        deliver: {vault_inbox_dir: "/inbox", feishu_target: "me"}
+        state_dir: "/st"
+    """))
+    cfg = load_config(str(cfg_file))
+    assert cfg.dig_max_sources == 12
+    assert cfg.dig_vault_dir == "/inbox"
+    assert cfg.dig_queue_path == "/st/dig_queue.yaml"
+
+def test_dig_fields_read_from_yaml(tmp_path):
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text(textwrap.dedent("""
+        deepseek: {base_url: "http://x/v1", model: "m", api_key_env: "DS_KEY"}
+        signal: {session_records_dir: "/recs", lookback_days: 3}
+        crawl: {searxng_url: "http://s:8080", github_token_env: "GH"}
+        deliver: {vault_inbox_dir: "/inbox", feishu_target: "me", dig_vault_dir: "/vault/谛听深挖", dig_max_sources: 8}
+        state_dir: "/st"
+    """))
+    cfg = load_config(str(cfg_file))
+    assert cfg.dig_vault_dir == "/vault/谛听深挖"
+    assert cfg.dig_max_sources == 8

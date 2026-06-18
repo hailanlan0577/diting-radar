@@ -14,4 +14,6 @@ crawl:
 deliver:
   vault_inbox_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/Inbox"
   feishu_target: "ou_你的openid"             # 飞书 open_id(ou_开头)，发私聊；获取方式见"手动验收"
+  dig_vault_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/谛听深挖"  # dig 深挖长资料落盘目录
+  dig_max_sources: 12                       # dig 每轮最多抓几篇来源
 state_dir: "/Users/<dev-user>/diting-radar/state"
