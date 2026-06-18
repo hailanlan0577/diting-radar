@@ -21,6 +21,7 @@ class Candidate:
     url: str
     summary: str
     source: str
+    body: str = ""
 
 @dataclass(frozen=True)
 class RankedItem:
