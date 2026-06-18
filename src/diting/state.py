@@ -1,6 +1,8 @@
 # src/diting/state.py
 from __future__ import annotations
-import os, sqlite3
+import json
+import os
+import sqlite3
 import yaml
 
 _DEFAULT_PROFILE = {"stack": [], "tools": [], "topics": []}
@@ -11,6 +13,7 @@ class StateStore:
         os.makedirs(self.dir, exist_ok=True)
         self._db = os.path.join(self.dir, "pushed.db")
         self._profile = os.path.join(self.dir, "interest_profile.yaml")
+        self._versions = os.path.join(self.dir, "versions.json")
         with sqlite3.connect(self._db) as c:
             c.execute("CREATE TABLE IF NOT EXISTS pushed (url TEXT PRIMARY KEY, title TEXT)")
 
@@ -31,3 +34,20 @@ class StateStore:
     def save_profile(self, profile: dict) -> None:
         with open(self._profile, "w", encoding="utf-8") as f:
             yaml.safe_dump(profile, f, allow_unicode=True)
+
+    def _load_versions(self) -> dict[str, str]:
+        if not os.path.exists(self._versions):
+            return {}
+        with open(self._versions, "r", encoding="utf-8") as f:
+            return json.load(f) or {}
+
+    def _save_versions(self, data: dict[str, str]) -> None:
+        with open(self._versions, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+
+    def get_seen_version(self, repo: str) -> str | None:
+        return self._load_versions().get(repo)
+
+    def set_seen_version(self, repo: str, version: str) -> None:
+        data = self._load_versions()
+        self._save_versions({**data, repo: version})
