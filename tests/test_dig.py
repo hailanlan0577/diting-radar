@@ -1,4 +1,5 @@
-from diting.dig import generate_dig_queries
+from diting.dig import generate_dig_queries, synthesize_dig
+from diting.models import Candidate, DigReport
 
 
 class _Client:
@@ -19,3 +20,25 @@ def test_generate_dig_queries_returns_and_caps():
 
 def test_generate_dig_queries_empty_payload():
     assert generate_dig_queries(_Client({}), "X") == []
+
+
+def test_synthesize_dig_builds_report():
+    class C:
+        def __init__(self): self.seen = None
+        def complete_json(self, messages, **kw):
+            self.seen = messages
+            return {"one_liner": "RAG 有三种新路线", "markdown": "## 概览\n正文..."}
+    c = C()
+    cands = [Candidate("论文A", "http://a", "摘要", "websearch", body="正文关键词QWE")]
+    r = synthesize_dig(c, "RAG 新做法", "2026-06-18", cands)
+    assert isinstance(r, DigReport)
+    assert r.markdown.startswith("## 概览") and r.one_liner == "RAG 有三种新路线"
+    assert r.source_count == 1 and not r.is_empty()
+    assert "正文关键词QWE" in c.seen[1]["content"]   # 喂了正文
+
+
+def test_synthesize_dig_empty_candidates_returns_empty():
+    class C:
+        def complete_json(self, m, **k): raise AssertionError("空候选不该调模型")
+    r = synthesize_dig(C(), "RAG", "2026-06-18", [])
+    assert r.is_empty() and r.source_count == 0
