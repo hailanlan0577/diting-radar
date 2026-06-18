@@ -14,7 +14,7 @@
 |------|------|------|
 | **本地 MacBook** | 源码主分支（唯一） | `/Users/<dev-user>/diting-radar` |
 | **GitHub** | 远程备份 | `https://github.com/hailanlan0577/diting-radar`（private） |
-| **部署目标** | 本机 launchd 定时 | `~/Library/LaunchAgents/ai.diting.{research,loops,trends}.plist` |
+| **部署目标** | 本机 launchd 定时 | `~/Library/LaunchAgents/ai.diting.{research,loops,trends,dig}.plist` |
 
 **禁忌：**
 - ❌ 不要用裸 `python`（alias 到 framework，不是 venv）—— 用全路径 `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3` 或 `python -m pip`
@@ -42,6 +42,7 @@ bash scripts/run-lens.sh research
 | 10:00 | 🔭 research | `run-lens.sh research` |
 | 14:00 | 🧩 loops | `run-lens.sh loops` |
 | 18:00 | 🛰️ trends | `run-lens.sh trends` |
+| 20:00 | 🔬 dig（深挖） | `run-lens.sh dig` |
 
 每个 job 跑 `scripts/run-lens.sh <lens>`：从 `~/.diting.env`(chmod600，存 `DEEPSEEK_API_KEY`)读 key（不依赖 ssh），跑 `python -m diting run --lens <lens>`，日志写 `state/cron-<lens>.log`。
 
@@ -57,7 +58,7 @@ bash scripts/run-lens.sh research
 ## 🧱 技术栈
 
 - Python 3.11（用全路径 framework python，见禁忌）
-- httpx（HTTP）/ pyyaml（配置）/ sqlite3（去重库）/ trafilatura（正文抽取，依赖 `lxml_html_clean`）/ pytest（53 测试）
+- httpx（HTTP）/ pyyaml（配置）/ sqlite3（去重库）/ trafilatura（正文抽取，依赖 `lxml_html_clean`）/ scrapling（抓正文 + DuckDuckGo 兜底搜索；隐身 `StealthyFetcher` 本机暂不可用，反爬域跳过）/ pytest（91 测试）
 - DeepSeek V4 Pro（OpenAI 兼容）
 
 ## 🗂️ 代码地图
@@ -72,17 +73,20 @@ diting-radar/
 │   ├── signal/
 │   │   ├── obsidian.py     # 读最近会话记录
 │   │   ├── distill.py      # DeepSeek 蒸出 Interests
-│   │   └── profile.py      # 关注清单 seed + fatten（含 repos）
+│   │   ├── profile.py      # 关注清单 seed + fatten（含 repos）
+│   │   └── dig_topics.py    # dig 选题（想挖清单优先/兴趣兜底/去重/无题 None）
 │   ├── query.py           # 查询生成（research / loops 镜头 prompt）
-│   ├── sources/           # arxiv / hackernews / github / websearch / github_releases(版本哨兵)
-│   ├── crawl.py           # 爬取编排（多源合并 + URL 去重）
+│   ├── sources/           # arxiv / hackernews / github / websearch / github_releases / fetch(scrapling 抓取内核：fetch_text 抓正文 + search_engine DDG 兜底)
+│   ├── crawl.py           # 爬取编排（多源合并 + URL 去重 + enrich_bodies top-N 抓正文）
 │   ├── novelty.py         # filter_unpushed(跨天去重) + judge_novelty(新颖度)
 │   ├── synthesize.py      # 合成 Report（带"为何重要"，空则诚实，lens-aware）
+│   ├── dig.py             # 🔬 dig 深挖镜头：run_dig 选题→搜→抓正文→synthesize_dig 综合长资料（独立入口，不复用 run_report）
 │   ├── deliver/
 │   │   ├── obsidian_out.py # 追加到 Inbox 当天笔记
-│   │   └── feishu.py       # lark-cli --as bot 发飞书
-│   ├── runner.py          # run_report 编排 + _collect_candidates(分流三镜头)
-│   └── __main__.py        # CLI：run --lens / seed-profile --from
+│   │   ├── feishu.py       # lark-cli --as bot 发飞书（情报 + dig 短通知）
+│   │   └── dig_out.py      # dig 长资料写 Obsidian 谛听深挖/(reference-manual)
+│   ├── runner.py          # run_report 编排 + _collect_candidates(分流 research/loops/trends)
+│   └── __main__.py        # CLI：run --lens(research/loops/trends/dig) / seed-profile
 ├── scripts/               # run-lens.sh / install-launchd.sh / launchd/*.plist / deploy.sh
 ├── docs/superpowers/      # specs(设计) + plans(v1/v2 计划)
 ├── config.example.yaml    # 脱敏示例（入库）

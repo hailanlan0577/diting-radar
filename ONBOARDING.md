@@ -31,6 +31,8 @@
 1. **不要用裸 `python`** —— 本机 `python` 被 alias 到系统 framework python，**不是 venv**。跑测试/装包一律用全路径 `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m pytest` 或 `python -m pip`（`source .venv/bin/activate` 盖不住 alias）。（2026-06-18）
 2. **飞书发消息必须 `--as bot`** —— 用户身份发给自己 open_id 会进飞书"自聊"（看不到）；机器人（皇后的小跟班）私聊才弹出。且需令牌带 `im:message.send_as_user`+`im:message` scope（管理员审核应用后重登 lark-cli）。（2026-06-18）
 3. **trends 镜头依赖 `state/interest_profile.yaml` 的 `repos:`** —— 不种 repo 它就空转。爬源都"降级返 []"，所以坏 repo 不报错只是没结果。（2026-06-18）
+4. **scrapling 两个坑**（2026-06-18 阶段一）：(a) `StealthyFetcher`(反爬隐身) 本机 import 即报错(browserforge: No headers can be generated)，故 `sources/fetch.py` 把它和 `Fetcher`(HTTP) **分开 import**，反爬域(知乎/CSDN)抓不到就跳过；(b) scrapling 的 `setup_logger()`(@lru_cache) 在 import 时把 `scrapling` logger 设回 INFO 刷 stderr，因 fetch.py 是函数内 lazy import，**必须在每处 scrapling import 之后调 `_quiet_scrapling()` 压回 ERROR** 才不污染 cron 日志。另：`Fetcher.get` 的 timeout 单位是**秒**不是毫秒。
+5. **dig 镜头选题**（2026-06-18 阶段二）：往 `state/dig_queue.yaml` 写 `- "话题"` 优先深挖；空了从兴趣自动选；已挖记进 `state/dug_topics.json` 去重；无题当天跳过。dig 走**独立 `run_dig`**（不复用 run_report），投递成功才 `mark_dug`。
 
 ---
 

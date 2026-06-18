@@ -56,7 +56,22 @@
 
 ## 📝 2026-06-18 做了什么
 
-### 2026-06-18（最新）
+### 2026-06-18（阶段二 dig 自动深挖镜头上线 ✅）
+
+1. ✅ **新增 dig 自动深挖镜头**：每天 20:00 自动挑一个话题（想挖清单 `state/dig_queue.yaml` 优先 → 空了从兴趣自动选 → 已挖去重 → 无题跳过），多角度搜 + 深抓正文 → DeepSeek 综合成结构化中文长资料 → 落 Obsidian `谛听深挖/`（reference-manual）+ 飞书短通知。复用阶段一抓取内核，走独立 `run_dig` 入口。
+2. ✅ **10 任务 TDD（subagent-driven）+ opus 全分支审查 + 真跑验收**：91 测试全绿，真跑《scrapling 反爬最佳实践》抓 12 篇 → 90 行长资料（5 小节齐全）+ 飞书通知，scrapling 日志干净。已合并 main + push。
+3. ✅ **launchd 现 4 时段**：10 research / 14 loops / 18 trends / 20 dig。
+4. 📝 **想挖清单用法**：往 `state/dig_queue.yaml` 写 `- "话题"` 即优先深挖；不写则自动从你最近兴趣选题。第一版不含 gh 扒代码仓（留 v2）。
+
+### 2026-06-18（scrapling 网搜深化 · 阶段一上线 ✅）
+
+1. ✅ **新增 scrapling 抓取内核** `sources/fetch.py`：`fetch_text` 抓网页正文 + `search_engine`（DuckDuckGo HTML 兜底搜索），失败一律降级返空（precision-first）。
+2. ✅ **日常 research/loops 网搜增强**：searxng 空了自动切 DDG 兜底；候选 top-5 真抓正文喂大模型；修了 `来源:?` 回退（URL 规范化匹配）。
+3. ✅ **scrapling 当库集成**（非 MCP——谛听是无人值守进程调不到 MCP）：装入 framework python。⚠️`StealthyFetcher` 因 browserforge 本机暂不可用→反爬域(知乎/CSDN)抓不到就跳过；scrapling 日志已静音（`_quiet_scrapling()` 在 import 后压回 ERROR），不污染 cron 日志。
+4. ✅ **11 任务 TDD（subagent-driven）+ opus 全分支审查 + 真跑验收**：73 测试全绿，真跑爬出 3-7 条情报、DDG 兜底+抓正文生效、日志干净。已合并 main 并 push。
+5. ⏳ **阶段二（dig 自动深挖镜头）待做**——共用本阶段抓取内核，每天选题深挖（清单优先+自动选题）产出 Obsidian 长资料 + 飞书短通知，20:00 定时。设计见 `docs/superpowers/specs/2026-06-18-diting-scrapling-deepdig-design.md`。
+
+### 2026-06-18（v1+v2 上线）
 
 1. ✅ **从脑洞到上线一气呵成** — brainstorm → 设计 → v1 计划(15 TDD 任务·子代理实现+审查) → opus 全分支审查 → 合并 → 真跑验收 → v2(loops/trends/launchd) → 上自动
 2. ✅ **飞书+Obsidian 双通道打通** — 飞书走"皇后的小跟班"机器人(`--as bot`)，open_id 已填 config
@@ -88,11 +103,14 @@
 
 ## 🎯 下次进来第一件事
 
-**先确认自动任务在正常跑**，再问用户要不要动 v3：
+**scrapling 网搜深化（阶段一）+ dig 自动深挖镜头（阶段二）已全部上线、合并 main、push。先观察几天自动跑效果**：
 
 ```bash
-launchctl list | grep diting          # 三任务应都在
-tail -5 ~/diting-radar/state/cron-research.log   # 看最近一次自动跑结果
+launchctl list | grep diting                       # 应 4 任务：research/loops/trends/dig
+tail -8 ~/diting-radar/state/cron-dig.log          # 看 20:00 dig 最近一次
+ls -t "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/谛听深挖" | head -3  # 深挖长资料
 ```
 
-如果用户想验证某镜头，手动跑：`bash ~/diting-radar/scripts/run-lens.sh research`（research/loops/trends 任选）。
+想让 dig 挖某话题：往 `state/dig_queue.yaml` 写 `- "话题"`。
+
+可选打磨（用户未拍板，按需问）：dig 加 gh 扒代码仓(v2) / 修 searxng 走代理 / dig 选题 dict 格式补测试 / 修本机 scrapling 隐身(browserforge) 让反爬域能抓。或 v3（反馈闭环 / 中文源 / 二奢镜头）。
