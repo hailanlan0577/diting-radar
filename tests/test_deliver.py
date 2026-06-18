@@ -1,7 +1,7 @@
 import os, time
-from diting.models import RankedItem, Report
+from diting.models import RankedItem, Report, DigReport
 from diting.deliver.obsidian_out import write_report_to_inbox
-from diting.deliver.feishu import format_feishu_message, send_to_feishu
+from diting.deliver.feishu import format_feishu_message, send_to_feishu, format_dig_notice, send_dig_notice
 
 _NOW = time.mktime(time.strptime("2026-06-18 10:05", "%Y-%m-%d %H:%M"))
 _R = Report("research", "2026-06-18",
@@ -31,3 +31,21 @@ def test_feishu_message_and_send():
     assert captured["argv"][:7] == ["lark-cli", "im", "+messages-send", "--as", "bot", "--user-id", "me"]
     assert captured["argv"][7] == "--text"
     assert "论文A" in captured["argv"][8]
+
+def test_format_dig_notice_has_topic_oneliner_path():
+    r = DigReport(topic="RAG 新做法", date="2026-06-18", markdown="...", one_liner="三条路线", source_count=4)
+    msg = format_dig_notice(r, "/vault/谛听深挖/2026-06-18 谛听深挖 RAG 新做法.md")
+    assert "RAG 新做法" in msg and "三条路线" in msg
+    assert "谛听深挖 RAG 新做法.md" in msg and "4" in msg
+
+def test_send_dig_notice_uses_bot():
+    r = DigReport(topic="RAG", date="2026-06-18", markdown="x", one_liner="y", source_count=1)
+    captured = {}
+    def fake_run(argv, **kw):
+        captured["argv"] = argv
+        class R: returncode = 0
+        return R()
+    ok = send_dig_notice(r, "ou_me", "/p.md", run=fake_run)
+    assert ok is True
+    assert "--as" in captured["argv"] and "bot" in captured["argv"]
+    assert "ou_me" in captured["argv"]
