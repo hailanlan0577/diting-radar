@@ -22,7 +22,7 @@
 - ❌ **MacBook 上**不要用裸 `python`（alias 到 framework）—— 用全路径 `/Library/Frameworks/Python.framework/Versions/3.11/bin/python3`；**Mac Studio 上**用 venv `~/diting-radar/.venv/bin/python`
 - ❌ 飞书发消息不要漏 `--as bot`（否则进看不到的自聊）
 - ❌ 不要把 `config.yaml` / `~/.diting.env` 推 git
-- ❌ **Mac Studio 的 scrapling Fetcher 依赖 playwright+browserforge+curl_cffi**（已装+写进 pyproject）；**搜索抓取必须走代理** `DITING_FETCH_PROXY=http://127.0.0.1:7890`（直连 DDG 被墙，run-lens.sh 已设）。MacBook 直连、不设此变量
+- ❌ **scrapling 要装 `scrapling[fetchers]` 全家桶**（playwright/patchright/browserforge/curl_cffi/msgspec 等，已写进 pyproject）+ `scrapling install` 浏览器二进制；只装裸 scrapling 则 import Fetcher 即崩。**搜索抓取必须走代理** `DITING_FETCH_PROXY=http://127.0.0.1:7890`（直连 DDG 被墙，run-lens.sh 已设；StealthyFetcher 抓国内反爬站不走此代理、直连即可）。MacBook 直连、不设此变量
 
 ## 🔧 部署工作流（开发 MacBook → 运行 Mac Studio）
 
@@ -70,7 +70,7 @@ ssh macstudio 'bash -l -c "cd ~/diting-radar && bash scripts/run-lens.sh researc
 ## 🧱 技术栈
 
 - Python 3.11（用全路径 framework python，见禁忌）
-- httpx（HTTP）/ pyyaml（配置）/ sqlite3（去重库）/ trafilatura（正文抽取，依赖 `lxml_html_clean`）/ scrapling（抓正文 + DuckDuckGo 兜底搜索；**Fetcher 隐藏依赖 playwright+browserforge+curl_cffi 已写进 pyproject**；隐身 `StealthyFetcher` 缺 chromium 暂不可用，反爬域跳过）/ pytest（91 测试）
+- httpx（HTTP）/ pyyaml（配置）/ sqlite3（去重库）/ trafilatura（正文抽取，依赖 `lxml_html_clean`）/ scrapling（抓正文 + DuckDuckGo 兜底搜索；**必须 `scrapling[fetchers]` 全家桶**才装全 Fetcher/StealthyFetcher 依赖；**隐身 `StealthyFetcher` 已启用**——`scrapling install` 装浏览器二进制后反爬域知乎/CSDN 能抓）/ pytest（91 测试）
 - DeepSeek V4 Pro（OpenAI 兼容）
 
 ## 🗂️ 代码地图

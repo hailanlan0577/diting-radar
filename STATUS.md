@@ -62,7 +62,7 @@
 2. 🐛 **坑1：scrapling 0.4.9 的 Fetcher(HTTP) 有隐藏依赖链** —— `from scrapling.fetchers import Fetcher` 缺 playwright→browserforge→curl_cffi 任一即 ModuleNotFoundError，搜索/抓正文静默失效（被 except 兜底返空：research 靠 arxiv/hn/github API 兜底没暴露，dig 全靠搜索就垮）。修：venv 补装这三个 + 写进 `pyproject.toml` dependencies 固化。
 3. 🐛 **坑2：Mac Studio 直连 DuckDuckGo 被墙** —— 必须走 mihomo 代理 `127.0.0.1:7890`。修：`fetch.py` 加 `_proxy()` 读环境变量 `DITING_FETCH_PROXY`，Mac Studio 的 run-lens.sh 设上（DeepSeek 国内直连/飞书走 lark-cli 都不读这变量，互不影响）。MacBook 不设=直连，原行为不变。
 4. ✅ **飞书配置免浏览器授权**：lark-cli 钥匙串存的是加密主钥（master.key）非明文密钥，导不出；改用 `config init --app-id cli_REDACTED --app-secret-stdin`（用户从开放平台复制 App Secret），机器人身份纯靠密钥换租户令牌，**没用上 device flow 浏览器授权**。
-5. 📌 **隐身抓取 StealthyFetcher 仍不可用**（缺 playwright chromium 二进制），反爬域(知乎/CSDN)继续跳过，与 MacBook 行为一致。dig 用 HTTP Fetcher 不受影响。
+5. ✅ **隐身抓取 StealthyFetcher 已启用**（2026-06-18 晚补 `scrapling[fetchers]` 全依赖含 patchright/msgspec + `scrapling install` 浏览器二进制；实测隐身抓 CSDN 拿到 424 字正文）→ 反爬域(知乎/CSDN)现在能抓正文，不再跳过。比 MacBook 还强（MacBook 的 browserforge 坏着）。
 
 ### 2026-06-18（阶段二 dig 自动深挖镜头上线 ✅）
 
@@ -116,7 +116,7 @@
 可选下一步：
 1. **观察明天（10/14/18/20）Mac Studio 自动跑的效果** —— 看飞书有没有按点收到情报
 2. **v3 打磨/增强**（反馈闭环 / searxng 代理 / `来源:?` cosmetic）
-3. **隐身抓取**（StealthyFetcher）想在 Mac Studio 启用需补 `playwright install chromium`（dig 用 HTTP Fetcher 不需要，留作可选）
+3. ~~隐身抓取~~ **已启用**（2026-06-18 晚）：反爬域(知乎/CSDN)现在能隐身抓到正文了
 
 > ⚠️ **改谛听代码的流程变了**：MacBook `/Users/<dev-user>/diting-radar` 仍是开发+测试+commit/push 的主分支 → 改完 `rsync src/ scripts/ 到 macstudio` → 如改了 plist 再 `ssh macstudio` 重装 launchd。详见 CLAUDE.md「部署工作流」。
 > 回滚：MacBook `for l in research loops trends dig; do launchctl load -w ~/Library/LaunchAgents/ai.diting.$l.plist; done` + Mac Studio 对应 unload。
