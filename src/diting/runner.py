@@ -6,7 +6,7 @@ from diting.signal.obsidian import collect_session_records
 from diting.signal.distill import distill_interests
 from diting.signal.profile import fatten_profile
 from diting.query import generate_queries
-from diting.crawl import run_crawl
+from diting.crawl import run_crawl, enrich_bodies
 from diting.novelty import filter_unpushed, judge_novelty
 from diting.synthesize import synthesize
 from diting.deliver.obsidian_out import write_report_to_inbox
@@ -34,7 +34,7 @@ def build_known_context(interests: Interests, profile: dict) -> str:
 
 
 def _collect_candidates(lens: str, cfg, client, store, interests: Interests,
-                        profile: dict, sources) -> tuple[list, list[str], dict]:
+                        profile: dict, sources, enrich=enrich_bodies) -> tuple[list, list[str], dict]:
     """Collect raw candidates for a given lens.
 
     trends: iterate watched repos through the release sentinel — no LLM query-gen.
@@ -57,11 +57,12 @@ def _collect_candidates(lens: str, cfg, client, store, interests: Interests,
     # research / loops — original path
     queries = generate_queries(client, lens, interests, profile)
     candidates, notes = run_crawl(queries, sources or build_sources(cfg))
+    candidates = enrich(candidates, cfg.fetch_top_n, cfg.known_antibot_domains)
     return candidates, notes, {}
 
 
 def run_report(lens, cfg, client, store, *, now_ts=None, sources=None,
-               feishu_run=subprocess.run) -> Report:
+               feishu_run=subprocess.run, enrich=enrich_bodies) -> Report:
     now_ts = now_ts if now_ts is not None else time.time()
     date = time.strftime("%Y-%m-%d", time.localtime(now_ts))
     degraded = False
@@ -74,7 +75,7 @@ def run_report(lens, cfg, client, store, *, now_ts=None, sources=None,
         store.save_profile(profile)
         candidates, notes, pending = _collect_candidates(
             lens, cfg, client, store, interests, profile,
-            sources or build_sources(cfg),
+            sources or build_sources(cfg), enrich=enrich,
         )
         candidates = filter_unpushed(candidates, store)
         # For trends the version diff IS the novelty signal; skip LLM novelty filter

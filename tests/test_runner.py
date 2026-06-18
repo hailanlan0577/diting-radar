@@ -39,7 +39,8 @@ def test_run_report_end_to_end(tmp_path):
         class R: returncode = 0
         return R()
     report = run_report("research", cfg, RouterClient(), store,
-                        now_ts=_NOW, sources=fake_sources, feishu_run=fake_feishu)
+                        now_ts=_NOW, sources=fake_sources, feishu_run=fake_feishu,
+                        enrich=lambda c, *a, **k: c)
     assert not report.is_empty() and report.items[0].url == "http://a"
     # Obsidian 落档
     assert os.path.exists(os.path.join(cfg.vault_inbox_dir, "2026-06-18 谛听情报.md"))
@@ -47,7 +48,8 @@ def test_run_report_end_to_end(tmp_path):
     assert "论文A" in " ".join(sent["argv"])
     # 已推送去重生效：再跑一次，该 URL 被 filter_unpushed 砍掉 → 空报告
     report2 = run_report("research", cfg, RouterClient(), store,
-                         now_ts=_NOW, sources=fake_sources, feishu_run=fake_feishu)
+                         now_ts=_NOW, sources=fake_sources, feishu_run=fake_feishu,
+                         enrich=lambda c, *a, **k: c)
     assert report2.is_empty()
 
 
@@ -65,7 +67,8 @@ def test_run_report_degrades_when_llm_fails(tmp_path):
         class R: returncode = 0
         return R()
     report = run_report("research", cfg, BoomClient(), store,
-                        now_ts=_NOW, sources={"arxiv": lambda q: []}, feishu_run=fake_feishu)
+                        now_ts=_NOW, sources={"arxiv": lambda q: []}, feishu_run=fake_feishu,
+                        enrich=lambda c, *a, **k: c)
     assert report.is_empty()
     assert any("DeepSeek" in n for n in report.notes)
     assert "argv" in sent  # degraded alert WAS sent to Feishu
@@ -94,7 +97,8 @@ def test_run_report_empty_skips_feishu(tmp_path):
         class R: returncode = 0
         return R()
     report = run_report("research", cfg, EmptyClient(), store,
-                        now_ts=_NOW, sources={"arxiv": lambda q: []}, feishu_run=fake_feishu)
+                        now_ts=_NOW, sources={"arxiv": lambda q: []}, feishu_run=fake_feishu,
+                        enrich=lambda c, *a, **k: c)
     assert report.is_empty()
     assert "argv" not in sent  # no Feishu spam on a normal-empty report
 
