@@ -28,6 +28,6 @@ def test_feishu_message_and_send():
         class R: returncode = 0
         return R()
     assert send_to_feishu(_R, "me", run=fake_run) is True
-    assert captured["argv"][:5] == ["lark-cli", "im", "+messages-send", "--user-id", "me"]
-    assert captured["argv"][5] == "--text"
-    assert "论文A" in captured["argv"][6]
+    assert captured["argv"][:7] == ["lark-cli", "im", "+messages-send", "--as", "bot", "--user-id", "me"]
+    assert captured["argv"][7] == "--text"
+    assert "论文A" in captured["argv"][8]

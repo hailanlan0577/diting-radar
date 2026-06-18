@@ -15,7 +15,8 @@ def format_feishu_message(report: Report) -> str:
 
 def send_to_feishu(report: Report, target: str, *, run=subprocess.run) -> bool:
     msg = format_feishu_message(report)
-    argv = ["lark-cli", "im", "+messages-send", "--user-id", target, "--text", msg]
+    # 以机器人身份发：用户身份发给自己 open_id 会落进飞书不显示的"自聊"，机器人私聊才会弹出+提醒
+    argv = ["lark-cli", "im", "+messages-send", "--as", "bot", "--user-id", target, "--text", msg]
     try:
         return run(argv, capture_output=True).returncode == 0
     except Exception:
