@@ -20,7 +20,7 @@ for lens in "${LENSES[@]}"; do
   plist="$LAUNCH_AGENTS_DIR/ai.diting.${lens}.plist"
   # Unload silently — ignore error if not previously loaded
   launchctl unload "$plist" 2>/dev/null || true
-  launchctl load -w "$plist"
+  launchctl load -w "$plist" || echo "WARN: load 返回非零 for $plist" >&2
   echo "    Loaded: ai.diting.$lens"
 done
 

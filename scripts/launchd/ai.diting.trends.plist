@@ -17,8 +17,6 @@
     <key>Minute</key>
     <integer>0</integer>
   </dict>
-  <key>StandardOutPath</key>
-  <string>/Users/<dev-user>/diting-radar/state/launchd-trends.out</string>
   <key>StandardErrorPath</key>
   <string>/Users/<dev-user>/diting-radar/state/launchd-trends.err</string>
 </dict>

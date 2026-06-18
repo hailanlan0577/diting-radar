@@ -13,7 +13,13 @@ if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
   export DEEPSEEK_API_KEY
 fi
 
+if [ -z "${DEEPSEEK_API_KEY:-}" ]; then
+  echo "[run-lens] WARN: DEEPSEEK_API_KEY 为空（~/.diting.env 没有且 ssh macstudio 取 key 失败），本次大概率会失败" >&2
+fi
+
 export GITHUB_TOKEN="${GITHUB_TOKEN:-}"
+
+[ -x "$PYBIN" ] || { echo "[run-lens] ERROR: $PYBIN 不存在或不可执行" >&2; exit 1; }
 
 mkdir -p "$HOME/diting-radar/state"
 exec "$PYBIN" -m diting run --lens "$1" >> "$HOME/diting-radar/state/cron-$1.log" 2>&1
