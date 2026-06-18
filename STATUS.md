@@ -103,14 +103,14 @@
 
 ## 🎯 下次进来第一件事
 
-**scrapling 网搜深化（阶段一）+ dig 自动深挖镜头（阶段二）已全部上线、合并 main、push。先观察几天自动跑效果**：
+**🚚 把谛听迁移到 Mac Studio**（用户拍板 2026-06-18：MacBook 会合盖/关机，定点任务 10/14/18/20 漏跑；Mac Studio 24h 开机才对）。按 runbook 一步步做：
 
-```bash
-launchctl list | grep diting                       # 应 4 任务：research/loops/trends/dig
-tail -8 ~/diting-radar/state/cron-dig.log          # 看 20:00 dig 最近一次
-ls -t "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/谛听深挖" | head -3  # 深挖长资料
-```
+→ **`docs/superpowers/plans/2026-06-18-diting-migrate-to-macstudio.md`**（8 步 A-H，Mac Studio 环境已 ssh 核实：python3.11/uv/git/同 iCloud vault/openclaw key 都就绪；缺 lark-cli/searxng）
 
-想让 dig 挖某话题：往 `state/dig_queue.yaml` 写 `- "话题"`。
+**关键**：唯一卡用户的是步骤 D（飞书 lark-cli 登录授权）——迁移前先跟用户约好时间。迁完按计划末尾改 ONBOARDING/CLAUDE/Obsidian 手册的"部署目标"为 Mac Studio。
 
-可选打磨（用户未拍板，按需问）：dig 加 gh 扒代码仓(v2) / 修 searxng 走代理 / dig 选题 dict 格式补测试 / 修本机 scrapling 隐身(browserforge) 让反爬域能抓。或 v3（反馈闭环 / 中文源 / 二奢镜头）。
+⚠️ 迁移完成前 **MacBook 这台仍在跑**（4 个 launchd 还活着），别提前停；步骤 G 才停。
+
+---
+
+阶段一/二已上线（scrapling 网搜深化 + dig 深挖镜头，91 测试，合并 main）。迁移后可选打磨：dig 加 gh 扒代码仓(v2) / searxng 代理 / 修隐身抓取(Mac Studio 上 browserforge 可能本就好的)。
