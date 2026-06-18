@@ -51,8 +51,10 @@ def test_search_engine_href_before_class():
     assert out[0].title == "Href First"
 
 
-def test_scrapling_logger_silenced():
-    """导入 fetch 模块后，scrapling logger 应被静音至 ERROR 级别。"""
+def test_quiet_scrapling_forces_error_level_even_after_reset():
+    """_quiet_scrapling() 应能在 logger 被设回 INFO 后压回 ERROR（模拟 scrapling setup_logger 行为）。"""
     import logging
-    from diting.sources import fetch  # noqa: F401  导入即应静音
+    from diting.sources import fetch
+    logging.getLogger("scrapling").setLevel(logging.INFO)  # 模拟 scrapling setup_logger 设回 INFO
+    fetch._quiet_scrapling()
     assert logging.getLogger("scrapling").level == logging.ERROR

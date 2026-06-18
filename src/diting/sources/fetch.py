@@ -2,14 +2,16 @@
 from __future__ import annotations
 from typing import Callable
 import re
-import logging as _logging
 from urllib.parse import quote, unquote, urlparse, parse_qs
 import trafilatura
 from diting.models import Candidate
 
-# scrapling 默认往 stderr 刷 INFO(每次抓取) + deprecation WARNING，会污染 cron 日志；
-# 只保留真正的 ERROR。fetch.py 是本项目调用 scrapling 的唯一入口。
-_logging.getLogger("scrapling").setLevel(_logging.ERROR)
+
+def _quiet_scrapling() -> None:
+    """scrapling import 时 setup_logger() 会把 'scrapling' logger 设成 INFO 并刷 stderr。
+    在每次实际用到 scrapling（import 之后）调用本函数压回 ERROR，避免污染 cron 日志。"""
+    import logging as _lg
+    _lg.getLogger("scrapling").setLevel(_lg.ERROR)
 
 
 def _html_of(resp) -> str:
@@ -28,8 +30,10 @@ def _scrapling_html(url: str, stealthy: bool, timeout_s: int) -> str:
     scrapling 0.4.9 实测：Fetcher.get 的 timeout 单位是『秒』。"""
     if stealthy:
         from scrapling.fetchers import StealthyFetcher
+        _quiet_scrapling()
         return _html_of(StealthyFetcher().fetch(url, headless=True, timeout=timeout_s * 1000))
     from scrapling.fetchers import Fetcher
+    _quiet_scrapling()
     return _html_of(Fetcher().get(url, timeout=timeout_s))
 
 
@@ -49,6 +53,7 @@ def _ddg_unwrap(href: str) -> str:
 
 def _ddg_html(query: str, max_results: int, timeout_s: int) -> str:
     from scrapling.fetchers import Fetcher    # 仅 Fetcher（HTTP），不碰 StealthyFetcher
+    _quiet_scrapling()
     return _html_of(Fetcher().get(f"{_DDG_HTML}?q={quote(query)}", timeout=timeout_s))
 
 
