@@ -33,7 +33,7 @@
 3. **trends 镜头依赖 `state/interest_profile.yaml` 的 `repos:`** —— 不种 repo 它就空转。爬源都"降级返 []"，所以坏 repo 不报错只是没结果。（2026-06-18）
 4. **scrapling 两个坑**（2026-06-18 阶段一）：(a) `StealthyFetcher`(反爬隐身) 本机 import 即报错(browserforge: No headers can be generated)，故 `sources/fetch.py` 把它和 `Fetcher`(HTTP) **分开 import**，反爬域(知乎/CSDN)抓不到就跳过；(b) scrapling 的 `setup_logger()`(@lru_cache) 在 import 时把 `scrapling` logger 设回 INFO 刷 stderr，因 fetch.py 是函数内 lazy import，**必须在每处 scrapling import 之后调 `_quiet_scrapling()` 压回 ERROR** 才不污染 cron 日志。另：`Fetcher.get` 的 timeout 单位是**秒**不是毫秒。
 5. **dig 镜头选题**（2026-06-18 阶段二）：往 `state/dig_queue.yaml` 写 `- "话题"` 优先深挖；空了从兴趣自动选；已挖记进 `state/dug_topics.json` 去重；无题当天跳过。dig 走**独立 `run_dig`**（不复用 run_report），投递成功才 `mark_dug`。
-6. **Mac Studio 运行环境两坑**（2026-06-18 迁移）：(a) scrapling 0.4.9 的 `Fetcher`(HTTP) 隐藏依赖 **playwright+browserforge+curl_cffi**，缺任一 import 即崩、搜索抓取静默失效（已写进 pyproject + venv 装好）；(b) 直连 DuckDuckGo 被墙，**搜索抓取必须走 mihomo 代理** `DITING_FETCH_PROXY=http://127.0.0.1:7890`（run-lens.sh 已设；DeepSeek/飞书不读此变量）。**`无新题/空，跳过`这句歧义**：既可能真没题，也可能搜索抓不到来源（空报告）——排查 dig 先确认搜索通不通。
+6. **Mac Studio 运行环境两坑**（2026-06-18 迁移）：(a) scrapling 必须装 **`scrapling[fetchers]` 全家桶**（playwright/patchright/browserforge/curl_cffi/msgspec 等），裸装 scrapling 则 `import Fetcher` 即 ModuleNotFoundError、搜索抓取静默失效（已写进 pyproject）；隐身 StealthyFetcher 还需 `scrapling install` 浏览器二进制（已装，知乎/CSDN 能抓）。(b) 直连 DuckDuckGo 被墙，**搜索抓取必须走 mihomo 代理** `DITING_FETCH_PROXY=http://127.0.0.1:7890`（run-lens.sh 已设；DeepSeek/飞书不读此变量）。**`无新题/空，跳过`这句歧义**：既可能真没题，也可能搜索抓不到来源（空报告）——排查 dig 先确认搜索通不通。
 
 ---
 

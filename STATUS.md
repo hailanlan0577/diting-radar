@@ -119,12 +119,9 @@
 
 ## 🎯 下次进来第一件事
 
-**✅ 迁移 Mac Studio 已完成（2026-06-18 22:25）** —— 4 镜头跑在 Mac Studio（<run-user>），MacBook 定时已停、plist 保留可回滚。research 真跑爬 3 条 + dig 真跑 12 篇来源长资料，飞书+Obsidian 双通道实测通。
+**✅ 2026-06-18/19 大改全部完成 + 验收**：迁 Mac Studio(4 镜头 24h) + 隐身抓取启用 + 信号源扩展(会话记录 + 6 个 vault 目录 + 各项目仓库 STATUS 跨机器同步)。MacBook 仅留 statussync 推送定时。
 
-可选下一步：
-1. **观察明天（10/14/18/20）Mac Studio 自动跑的效果** —— 看飞书有没有按点收到情报
-2. **v3 打磨/增强**（反馈闭环 / searxng 代理 / `来源:?` cosmetic）
-3. ~~隐身抓取~~ **已启用**（2026-06-18 晚）：反爬域(知乎/CSDN)现在能隐身抓到正文了
+**下次第一件事**：**观察自动跑效果**——看 Mac Studio 这两天 10/14/18/20 有没有按点把情报送到飞书+Obsidian、质量如何（信号源扩展后 research 已从 3 条增到 8 条）。看完再决定调啥（v3 反馈闭环 / max_docs 调大 / searxng 代理 / 接 Mac Mini 的 luxury-bag-copilot）。了
 
 > ⚠️ **改谛听代码的流程变了**：MacBook `/Users/<dev-user>/diting-radar` 仍是开发+测试+commit/push 的主分支 → 改完 `rsync src/ scripts/ 到 macstudio` → 如改了 plist 再 `ssh macstudio` 重装 launchd。详见 CLAUDE.md「部署工作流」。
 > 回滚：MacBook `for l in research loops trends dig; do launchctl load -w ~/Library/LaunchAgents/ai.diting.$l.plist; done` + Mac Studio 对应 unload。
