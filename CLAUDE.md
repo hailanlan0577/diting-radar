@@ -58,7 +58,7 @@ ssh macstudio 'bash -l -c "cd ~/diting-radar && bash scripts/run-lens.sh researc
 
 每个 job 跑 `scripts/run-lens.sh <lens>`（在 Mac Studio）：从本地 `~/.openclaw/openclaw.json` 读 DeepSeek key（不依赖 ssh），设 `DITING_FETCH_PROXY` 让搜索抓取走代理，跑 `.venv/bin/python -m diting run --lens <lens>`，日志写 `state/cron-<lens>.log`。
 
-> **另有 MacBook 端定时** `ai.diting.statussync`（每天 09:30）：跑 `scripts/sync-status-to-studio.sh`，把 MacBook 各项目仓库的 STATUS/ONBOARDING 推到 Mac Studio `~/project-status/` 供谛听读（兴趣信号）。这是**唯一还留在 MacBook 的 diting 定时**，MacBook→Studio 单推。装：`launchctl load -w ~/Library/LaunchAgents/ai.diting.statussync.plist`。
+> **另有 MacBook 端定时** `ai.diting.statussync`（登录即推 RunAtLoad + 开着时每 6h 推一次 StartInterval，不挑固定时间，避开睡觉/合盖时段；睡眠时不推、唤醒补推）：跑 `scripts/sync-status-to-studio.sh`，把 MacBook 各项目仓库的 STATUS/ONBOARDING 推到 Mac Studio `~/project-status/` 供谛听读（兴趣信号，谛听第二天读即可）。这是**唯一还留在 MacBook 的 diting 定时**，MacBook→Studio 单推。装：`launchctl load -w ~/Library/LaunchAgents/ai.diting.statussync.plist`。
 
 ## 🏗️ 关键外部服务
 

@@ -62,7 +62,7 @@
 - `obsidian.py` 加 `collect_documents`（每篇截断 1500 字 + 带文件名，按 mtime 取最新 12 篇，排除"谛听情报/谛听深挖"自产出防自循环）；重构出共享 `_collect_md_dir`。
 - `config.py` 加 `signal.extra_doc_dirs` + `extra_lookback_days`（默认 14 天）；`distill` 预算 24000→40000 容纳两类信号；runner/dig 合并两类信号。
 - 5 个新测试（96 绿）。实测 Mac Studio 读到 14 会话 + 12 项目文档（ytst M3/二奢买手薪酬/谛听手册 等真实项目），research 真跑 8 条（扩展前 3 条）。commit 6ae6cde。
-- 📡 **跨机器 STATUS 同步**（commit 7f0b730）：`scripts/sync-status-to-studio.sh` 在 **MacBook** 跑（launchd `ai.diting.statussync` 每天 09:30），把各项目仓库 STATUS/ONBOARDING 扁平命名（`macbook-<proj>-`）推到 Mac Studio `~/project-status/`（已加进 extra_doc_dirs）。**方向 MacBook→Studio 单推**（Studio 够不着 MacBook）。实测推 18 文档，谛听经 14 天过滤读到 ytst/survival-kit-pro 等活跃项目 STATUS。Mac Mini 暂未接（没配 macstudio 别名 + 其项目已不活跃）。
+- 📡 **跨机器 STATUS 同步**（commit 7f0b730）：`scripts/sync-status-to-studio.sh` 在 **MacBook** 跑（launchd `ai.diting.statussync`：登录即推 + 开着时每 6h 推一次，不挑固定时间避开睡觉时段，谛听第二天读即可），把各项目仓库 STATUS/ONBOARDING 扁平命名（`macbook-<proj>-`）推到 Mac Studio `~/project-status/`（已加进 extra_doc_dirs）。**方向 MacBook→Studio 单推**（Studio 够不着 MacBook）。实测推 18 文档，谛听经 14 天过滤读到 ytst/survival-kit-pro 等活跃项目 STATUS。Mac Mini 暂未接（没配 macstudio 别名 + 其项目已不活跃）。
 
 ### 2026-06-18（🚚 迁移到 Mac Studio 完成 ✅）
 
