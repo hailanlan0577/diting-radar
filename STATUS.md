@@ -56,6 +56,13 @@
 
 ## 📝 2026-06-18 做了什么
 
+### 2026-06-18（🔭 信号源扩展 A+C ✅）
+
+把"了解你"的信号源从**只读会话记录**扩展到**会话记录 + 6 个高价值项目目录的近期文档**（二奢软件/项目/复盘/故障复盘/Mac Studio AI 底座/工具）：
+- `obsidian.py` 加 `collect_documents`（每篇截断 1500 字 + 带文件名，按 mtime 取最新 12 篇，排除"谛听情报/谛听深挖"自产出防自循环）；重构出共享 `_collect_md_dir`。
+- `config.py` 加 `signal.extra_doc_dirs` + `extra_lookback_days`（默认 14 天）；`distill` 预算 24000→40000 容纳两类信号；runner/dig 合并两类信号。
+- 5 个新测试（96 绿）。实测 Mac Studio 读到 14 会话 + 12 项目文档（ytst M3/二奢买手薪酬/谛听手册 等真实项目），research 真跑 8 条（扩展前 3 条）。commit 6ae6cde。
+
 ### 2026-06-18（🚚 迁移到 Mac Studio 完成 ✅）
 
 1. ✅ **8 步 A-H 全过**：rsync 代码 → uv 建 venv 装依赖 → config/run-lens 路径换 <run-user> + key 改读本地 openclaw → lark-cli 配飞书 → 同步 state 去重历史 → 装 4 launchd → 停 MacBook launchd → research(3条)+dig(12篇) 真跑验收。

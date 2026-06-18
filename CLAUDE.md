@@ -83,7 +83,7 @@ diting-radar/
 │   ├── state.py           # StateStore：pushed.db(去重) / interest_profile.yaml(关注清单) / versions.json(版本快照)
 │   ├── llm.py             # DeepSeekClient（complete / complete_json）
 │   ├── signal/
-│   │   ├── obsidian.py     # 读最近会话记录
+│   │   ├── obsidian.py     # 读最近会话记录 + 高价值项目目录近期文档(collect_documents)
 │   │   ├── distill.py      # DeepSeek 蒸出 Interests
 │   │   ├── profile.py      # 关注清单 seed + fatten（含 repos）
 │   │   └── dig_topics.py    # dig 选题（想挖清单优先/兴趣兜底/去重/无题 None）
