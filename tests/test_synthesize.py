@@ -23,11 +23,13 @@ def test_synthesize_empty_is_honest():
     assert "github 没取到" in r.notes
 
 def test_synthesize_loops_lens_uses_loops_system_prompt():
-    """loops 镜头：系统 prompt 应区分解法与反对证据，且 lens 字段正确。"""
+    """loops 镜头：系统 prompt 应区分解法与反对证据，且 lens 字段正确；decisions 应在 LLM ctx 中。"""
+    import json
+
     class FakeClient:
-        def __init__(self): self.seen_sys = None
+        def __init__(self): self.seen = None
         def complete_json(self, messages, **kw):
-            self.seen_sys = messages[0]["content"]
+            self.seen = messages
             return {"items": [{"url": "http://b", "title": "Qdrant pitfalls",
                                "one_liner": "Qdrant 的常见坑",
                                "why_it_matters": "质疑你选 Qdrant 的决策"}]}
@@ -48,7 +50,13 @@ def test_synthesize_loops_lens_uses_loops_system_prompt():
     assert r.items[0].lens == "loops"
 
     # 系统 prompt 应包含区分解法/反对证据相关词汇
-    sys_content = client.seen_sys
+    sys_content = client.seen[0]["content"]
     assert sys_content is not None
     assert any(kw in sys_content for kw in ("解法", "反对", "counter", "decision", "decisions")), \
         f"loops 系统 prompt 未区分解法/反对证据: {sys_content!r}"
+
+    # 用户 ctx 应包含 decisions 字段且传入了 LLM
+    user_ctx = json.loads(client.seen[1]["content"])
+    assert "decisions" in user_ctx, "ctx 缺少 decisions 字段"
+    assert "选用 Qdrant 作为向量数据库" in user_ctx["decisions"], \
+        f"decisions 未在 ctx 中: {user_ctx.get('decisions')}"
