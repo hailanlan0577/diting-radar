@@ -8,8 +8,9 @@ from diting.models import Candidate
 
 
 def search_web(
-    query: str, searxng_url: str, max_results: int = 5, *, get=httpx.get
+    query: str, searxng_url: str, max_results: int = 5, *, get=httpx.get, search_fn=None
 ) -> list[Candidate]:
+    results = []
     try:
         resp = get(
             f"{searxng_url.rstrip('/')}/search",
@@ -18,7 +19,7 @@ def search_web(
         resp.raise_for_status()
         results = resp.json().get("results", [])[:max_results]
     except Exception:
-        return []
+        results = []
     out: list[Candidate] = []
     for r in results:
         title = (r.get("title") or "").strip()
@@ -32,6 +33,10 @@ def search_web(
                     source="websearch",
                 )
             )
+    if not out:
+        from diting.sources.fetch import search_engine
+        fn = search_fn or search_engine
+        return fn(query, max_results=max_results)
     return out
 
 
