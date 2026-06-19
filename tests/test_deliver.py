@@ -32,6 +32,26 @@ def test_feishu_message_and_send():
     assert captured["argv"][7] == "--text"
     assert "论文A" in captured["argv"][8]
 
+def test_feishu_send_failure_logs(capsys):
+    """飞书发送失败(returncode≠0)时返回 False 并打印到 stderr（不再静默吞错误）。"""
+    def fake_run(argv, **kw):
+        class R:
+            returncode = 1
+            stderr = b"lark-cli: command not found"
+        return R()
+    assert send_to_feishu(_R, "me", run=fake_run) is False
+    err = capsys.readouterr().err
+    assert "[feishu]" in err and "失败" in err
+
+
+def test_feishu_send_exception_logs(capsys):
+    """lark-cli 找不到(抛异常)时返回 False 并打印原因（这正是 launchd 缺 PATH 的症状）。"""
+    def boom(argv, **kw):
+        raise FileNotFoundError("lark-cli")
+    assert send_to_feishu(_R, "me", run=boom) is False
+    assert "[feishu]" in capsys.readouterr().err
+
+
 def test_format_dig_notice_has_topic_oneliner_path():
     r = DigReport(topic="RAG 新做法", date="2026-06-18", markdown="...", one_liner="三条路线", source_count=4)
     msg = format_dig_notice(r, "/vault/谛听深挖/2026-06-18 谛听深挖 RAG 新做法.md")

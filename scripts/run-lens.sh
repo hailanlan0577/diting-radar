@@ -3,6 +3,10 @@ set -euo pipefail
 cd "$HOME/diting-radar"
 PYBIN=/Library/Frameworks/Python.framework/Versions/3.11/bin/python3
 
+# 飞书 lark-cli（及其依赖 node）在 homebrew；launchd 非登录 shell 的默认 PATH 不含
+# /opt/homebrew/bin → 找不到 lark-cli → 飞书静默发不出。补上（Mac Studio 定制版同样处理）。
+export PATH="/opt/homebrew/bin:$PATH"
+
 # DeepSeek key: prefer local env file (chmod 600), fall back to macstudio openclaw via ssh
 if [ -f "$HOME/.diting.env" ]; then
   set -a; source "$HOME/.diting.env"; set +a

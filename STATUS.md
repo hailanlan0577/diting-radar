@@ -68,6 +68,14 @@
 
 **iCloud 双层根治（运维）**：① 强制下载——`scripts/prefetch-vault.py` 扫 vault 找影子(dataless)文件拉回本地，实测清掉 317 个、0 残留；② 防复发——新增 `ai.diting.prefetch` launchd 定时（每天 9:50/13:50/17:50/19:50 赶在四镜头前自动拉回影子），已并入 `install-launchd.sh`。现 Mac Studio 共 **5 个 launchd**（4 镜头 + prefetch）。「优化 Mac 储存空间」开关用户选择保留开启（关掉其实不省空间——那 554G 是照片+备份、开关只管云盘的 391M；但有 prefetch + 代码超时双保险，开不开都行）。
 
+### 2026-06-19（🐛 修 launchd 缺 PATH 导致飞书静默发不出 ✅）
+
+**现象**：下午 loops(14:00) 跑出 2 条、trends(18:00) 0 条，飞书都没收到（trends 0 条本就不发=正常；loops 2 条该发没发=bug）。Obsidian 写进去了，飞书没有。
+
+**根因**：launchd 用 `/bin/bash`（非登录 shell）跑 run-lens.sh，默认 PATH(`/usr/bin:/bin:...`) 不含 `/opt/homebrew/bin` → 找不到 `lark-cli`（及其依赖 node）→ `feishu.py` 的 subprocess 抛 FileNotFoundError → 被 `except: return False` **静默吞掉** → 飞书发不出且日志无错误。早上 research 是我手动用登录 shell(`bash -l`)补跑的(PATH 完整)反而掩盖了它——今天 loops/trends 是 launchd 第一次真正走到飞书投递才暴露。
+
+**修复**：① `run-lens.sh` 开头加 `export PATH="/opt/homebrew/bin:$PATH"`（Mac Studio 定制版已改 + 本地 git 版同步）；② `feishu.py` 提取 `_run_lark`，发送失败/异常时打印 `[feishu] ...` 到 stderr（进 cron 日志），不再静默——这是 bug 藏一天的元凶。新增 2 测试（99 绿）。验证：kickstart loops 走真 launchd 环境 + 精简环境真发飞书 `returncode=0`/`ok:true`，通道恢复。
+
 ---
 
 ## 📝 2026-06-18 做了什么
