@@ -69,3 +69,25 @@ def test_collect_documents_caps_count(tmp_path):
 
 def test_collect_documents_missing_dir_ok(tmp_path):
     assert collect_documents([str(tmp_path / "nope")], 14, 1_000_000.0) == []
+
+
+def test_collect_md_dir_skips_hanging_dir(tmp_path, monkeypatch):
+    """目录读取卡死（如 iCloud 文件提供者抽风）时，超时跳过该目录，不拖垮整个进程。"""
+    import time
+    import diting.signal.obsidian as ob
+
+    monkeypatch.setattr(ob, "_LISTDIR_TIMEOUT", 0.3)
+    real_listdir = os.listdir
+
+    def hanging_listdir(p):
+        time.sleep(5)              # 模拟 iCloud opendir() 永久阻塞
+        return real_listdir(p)
+
+    monkeypatch.setattr(ob.os, "listdir", hanging_listdir)
+
+    start = time.time()
+    items = collect_session_records(str(tmp_path), lookback_days=5, now_ts=1_000_000.0)
+    elapsed = time.time() - start
+
+    assert items == []             # 卡住的目录被跳过，返回空
+    assert elapsed < 2.0           # 超时(0.3s)就放弃，没傻等满 5 秒

@@ -1,6 +1,6 @@
 # 项目当前状态
 
-> 最后更新：2026-06-18
+> 最后更新：2026-06-19
 > 新 Claude 进门先读 `CLAUDE.md`（地形 + 部署），再读本文件（进度 + 下一步）。
 
 ## 🎯 一句话
@@ -51,6 +51,20 @@
 2. **searxng/websearch 常空** — searxng 上游引擎可能要走代理；目前 arXiv/HN/GitHub 三家已扛起来，websearch 是 bonus。
 3. **首次 trends 跑会把当前所有版本当"新版"** — 建基线行为，之后只报真·新版。
 4. **fatten_profile 把 distill 出的实体一股脑塞进 tools/topics** — profile 会越长越大（已观察到），不影响功能，v3 可加去噪。
+
+---
+
+## 📝 2026-06-19 做了什么
+
+### 2026-06-19（🩹 修 iCloud 卡死导致 research 僵死无推送 ✅）
+
+**现象**：早上 10:00 research 没推送。排查发现 launchd 起的 research 进程从 10:00 卡死——CPU 时间死在 0.3 秒不增长、无任何网络连接、STAT=S；`sample <pid> 4` 抓栈 4 秒采样 100% 卡在 `os_listdir → __opendir2 → open$NOCANCEL`。
+
+**根因**：信号源收集 `os.listdir` 读 Obsidian 的 iCloud 目录（`~/Library/Mobile Documents/iCloud~md~obsidian/...`）时，Mac Studio 的 iCloud 文件提供者（fileproviderd）偶发抽风/按需下载卡死，`opendir()` 永久阻塞内核态 → 整个谛听僵在第一步"读笔记"，走不到爬取/合成/投递 → 无推送。全项目 listdir 只有 `obsidian.py:21` 一处。昨天能跑今天卡 = iCloud 间歇性问题。反证：杀掉卡死进程后，同代码同 8 个目录 3 分钟跑通出 4 条；逐目录复测全 0.0x 秒秒回（旧进程的 open 已永久挂死，目录后来恢复也醒不过来）。
+
+**修复**：`obsidian.py` 的 `_collect_md_dir` 加守护线程超时保护——拆出 `_read_md_dir`（实际 listdir+读文件），外层用 `threading.Thread(daemon=True)+join(_LISTDIR_TIMEOUT)` 包裹，超时（默认 10s，`DITING_DIR_TIMEOUT` 可调）未读完就跳过该目录返回 `[]`，绝不拖垮整个进程；`daemon=True` 保证卡住线程不阻塞进程退出（不能用 ThreadPoolExecutor，其非 daemon 线程会在解释器退出时被 atexit join 而卡住）。去掉原 `os.path.isdir` 检查，改由 `os.listdir` 抛 OSError 兜底。新增 `test_collect_md_dir_skips_hanging_dir`（97 测试全绿）。
+
+**止血 + 部署**：`kill -9` 卡死进程 + 手动 `run-lens.sh research` 补当天 4 条情报；⚠️只 `rsync obsidian.py` 单文件到 Mac Studio（不整目录 rsync，避免覆盖定制的 run-lens.sh），真实 iCloud 目录验证读 11 会话+12 文档 0.0x 秒秒回。
 
 ---
 
@@ -120,6 +134,8 @@
 ## 🎯 下次进来第一件事
 
 **✅ 2026-06-18/19 大改全部完成 + 验收**：迁 Mac Studio(4 镜头 24h) + 隐身抓取启用 + 信号源扩展(会话记录 + 6 个 vault 目录 + 各项目仓库 STATUS 跨机器同步)。MacBook 仅留 statussync 推送定时。
+
+**✅ 2026-06-19 修了 iCloud 卡死 bug**：research 因 iCloud 抽风卡在 `os.listdir` 僵死、整天无推送 → 给信号目录读取加守护线程超时保护（超 10s 跳过该目录），已部署 Mac Studio。详见上方「2026-06-19 做了什么」。观察点：之后若某天某镜头偶尔少几条，可能是某目录被超时跳过（看 cron log），属预期容错、非故障。
 
 **下次第一件事**：**观察自动跑效果**——看 Mac Studio 这两天 10/14/18/20 有没有按点把情报送到飞书+Obsidian、质量如何（信号源扩展后 research 已从 3 条增到 8 条）。看完再决定调啥（v3 反馈闭环 / max_docs 调大 / searxng 代理 / 接 Mac Mini 的 luxury-bag-copilot）。了
 
