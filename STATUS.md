@@ -66,6 +66,8 @@
 
 **止血 + 部署**：`kill -9` 卡死进程 + 手动 `run-lens.sh research` 补当天 4 条情报；⚠️只 `rsync obsidian.py` 单文件到 Mac Studio（不整目录 rsync，避免覆盖定制的 run-lens.sh），真实 iCloud 目录验证读 11 会话+12 文档 0.0x 秒秒回。
 
+**iCloud 双层根治（运维）**：① 强制下载——`scripts/prefetch-vault.py` 扫 vault 找影子(dataless)文件拉回本地，实测清掉 317 个、0 残留；② 防复发——新增 `ai.diting.prefetch` launchd 定时（每天 9:50/13:50/17:50/19:50 赶在四镜头前自动拉回影子），已并入 `install-launchd.sh`。现 Mac Studio 共 **5 个 launchd**（4 镜头 + prefetch）。「优化 Mac 储存空间」开关用户选择保留开启（关掉其实不省空间——那 554G 是照片+备份、开关只管云盘的 391M；但有 prefetch + 代码超时双保险，开不开都行）。
+
 ---
 
 ## 📝 2026-06-18 做了什么

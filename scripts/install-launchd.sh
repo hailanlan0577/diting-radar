@@ -25,6 +25,13 @@ for lens in "${LENSES[@]}"; do
   echo "    Loaded: ai.diting.$lens"
 done
 
+# Prefetch agent（非 lens）：每天镜头跑之前把 iCloud vault 影子拉回本地，防 research 卡死
+echo "==> Installing prefetch agent ..."
+cp "$PLIST_DIR/ai.diting.prefetch.plist" "$LAUNCH_AGENTS_DIR/"
+launchctl unload "$LAUNCH_AGENTS_DIR/ai.diting.prefetch.plist" 2>/dev/null || true
+launchctl load -w "$LAUNCH_AGENTS_DIR/ai.diting.prefetch.plist" || echo "WARN: prefetch load 返回非零" >&2
+echo "    Loaded: ai.diting.prefetch"
+
 echo ""
 echo "==> Registered ai.diting agents:"
 launchctl list | grep diting || echo "(none found — may need a moment to register)"
