@@ -34,6 +34,8 @@
 4. **scrapling 两个坑**（2026-06-18 阶段一）：(a) `StealthyFetcher`(反爬隐身) 本机 import 即报错(browserforge: No headers can be generated)，故 `sources/fetch.py` 把它和 `Fetcher`(HTTP) **分开 import**，反爬域(知乎/CSDN)抓不到就跳过；(b) scrapling 的 `setup_logger()`(@lru_cache) 在 import 时把 `scrapling` logger 设回 INFO 刷 stderr，因 fetch.py 是函数内 lazy import，**必须在每处 scrapling import 之后调 `_quiet_scrapling()` 压回 ERROR** 才不污染 cron 日志。另：`Fetcher.get` 的 timeout 单位是**秒**不是毫秒。
 5. **dig 镜头选题**（2026-06-18 阶段二）：往 `state/dig_queue.yaml` 写 `- "话题"` 优先深挖；空了从兴趣自动选；已挖记进 `state/dug_topics.json` 去重；无题当天跳过。dig 走**独立 `run_dig`**（不复用 run_report），投递成功才 `mark_dug`。
 6. **Mac Studio 运行环境两坑**（2026-06-18 迁移）：(a) scrapling 必须装 **`scrapling[fetchers]` 全家桶**（playwright/patchright/browserforge/curl_cffi/msgspec 等），裸装 scrapling 则 `import Fetcher` 即 ModuleNotFoundError、搜索抓取静默失效（已写进 pyproject）；隐身 StealthyFetcher 还需 `scrapling install` 浏览器二进制（已装，知乎/CSDN 能抓）。(b) 直连 DuckDuckGo 被墙，**搜索抓取必须走 mihomo 代理** `DITING_FETCH_PROXY=http://127.0.0.1:7890`（run-lens.sh 已设；DeepSeek/飞书不读此变量）。**`无新题/空，跳过`这句歧义**：既可能真没题，也可能搜索抓不到来源（空报告）——排查 dig 先确认搜索通不通。
+7. **launchd 跑的脚本必须自己补 PATH**（2026-06-19）—— launchd 用 `/bin/bash`（非登录 shell），默认 PATH 只有 `/usr/bin:/bin:/usr/sbin:/sbin`，**不含 `/opt/homebrew/bin`** → 找不到 `lark-cli`(及依赖 node) → 飞书**静默**发不出（旧 feishu.py `except: return False` 吞了错，藏了一整天）。`run-lens.sh` 已加 `export PATH="/opt/homebrew/bin:$PATH"`。⚠️验证无人值守任务别用 `bash -l`（登录 shell PATH 完整会掩盖问题），要用 `launchctl kickstart -k gui/$(id -u)/<label>` 走真实环境或 `env -i PATH=/usr/bin:/bin ...` 模拟精简环境。
+8. **iCloud vault 的「影子」(dataless) 文件别慌**（2026-06-19/21）—— 新文件刚同步 / 优化储存 evict 的旧文件是占位符，`os.listdir`/`open` 读到可能永久卡死。已三重防护：`obsidian.py` 守护线程超时(超 10s 跳过该目录) + `ai.diting.prefetch` 定时(每天 4 次拉回影子) + iCloud 自愈。prefetch 偶尔「拉回 0/N」是新文件同步的瞬时态、会自愈，**非 bug**，别去重复排查。
 
 ---
 

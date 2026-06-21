@@ -55,8 +55,9 @@ ssh macstudio 'bash -l -c "cd ~/diting-radar && bash scripts/run-lens.sh researc
 | 14:00 | 🧩 loops | `run-lens.sh loops` |
 | 18:00 | 🛰️ trends | `run-lens.sh trends` |
 | 20:00 | 🔬 dig（深挖） | `run-lens.sh dig` |
+| 09:50/13:50/17:50/19:50 | 🔄 prefetch | `prefetch-vault.py`（每个镜头前把 iCloud「影子」拉回本地）|
 
-每个 job 跑 `scripts/run-lens.sh <lens>`（在 Mac Studio）：从本地 `~/.openclaw/openclaw.json` 读 DeepSeek key（不依赖 ssh），设 `DITING_FETCH_PROXY` 让搜索抓取走代理，跑 `.venv/bin/python -m diting run --lens <lens>`，日志写 `state/cron-<lens>.log`。
+每个镜头 job 跑 `scripts/run-lens.sh <lens>`（在 Mac Studio）：从本地 `~/.openclaw/openclaw.json` 读 DeepSeek key（不依赖 ssh），设 `DITING_FETCH_PROXY` 让搜索抓取走代理，**`export PATH=/opt/homebrew/bin:$PATH` 让 launchd 找得到 lark-cli/node**（否则飞书静默发不出，2026-06-19 踩坑），跑 `.venv/bin/python -m diting run --lens <lens>`，日志写 `state/cron-<lens>.log`。另有 `ai.diting.prefetch` 每天 4 次（赶在镜头前 10 分钟）把 iCloud 上变成「影子」(dataless) 的笔记拉回本地，防 research 读取卡死（2026-06-19 加）。
 
 > **另有 MacBook 端定时** `ai.diting.statussync`（登录即推 RunAtLoad + 开着时每 6h 推一次 StartInterval，不挑固定时间，避开睡觉/合盖时段；睡眠时不推、唤醒补推）：跑 `scripts/sync-status-to-studio.sh`，把 MacBook 各项目仓库的 STATUS/ONBOARDING 推到 Mac Studio `~/project-status/` 供谛听读（兴趣信号，谛听第二天读即可）。这是**唯一还留在 MacBook 的 diting 定时**，MacBook→Studio 单推。装：`launchctl load -w ~/Library/LaunchAgents/ai.diting.statussync.plist`。
 
@@ -101,7 +102,7 @@ diting-radar/
 │   │   └── dig_out.py      # dig 长资料写 Obsidian 谛听深挖/(reference-manual)
 │   ├── runner.py          # run_report 编排 + _collect_candidates(分流 research/loops/trends)
 │   └── __main__.py        # CLI：run --lens(research/loops/trends/dig) / seed-profile
-├── scripts/               # run-lens.sh / install-launchd.sh / launchd/*.plist / deploy.sh
+├── scripts/               # run-lens.sh(含 PATH 补丁) / prefetch-vault.py(拉回 iCloud 影子) / install-launchd.sh / launchd/*.plist / deploy.sh
 ├── docs/superpowers/      # specs(设计) + plans(v1/v2 计划)
 ├── config.example.yaml    # 脱敏示例（入库）
 ├── config.yaml            # 真配置（gitignore）

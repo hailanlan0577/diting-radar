@@ -54,6 +54,16 @@
 
 ---
 
+## 📝 2026-06-21 做了什么
+
+### 2026-06-21（✅ 验证飞书修复在真实定时下生效 + prefetch 加固）
+
+- **验证 launchd 飞书修复**：dig 06-19 自然挖《iCloud 优化存储导致进程卡死在 os.listdir》、06-20 挖《谛听项目维护与问题排查》，`dug_topics.json` 都登记了——因代码是"投递成功才 mark_dug"，**能登记 = 飞书发成功的铁证**。loops 06-20 也出 6 条。launchd PATH 修复确认在真实定时下生效。
+- **排查 prefetch「拉回 0/N」= 非 bug**：那些影子是新文件刚从别的设备同步到 Mac Studio 的瞬时态（iCloud 先放 dataless 占位、内容过几秒才传完），prefetch 撞上传输中间态当下抓失败，iCloud 随后自愈（次日全"无影子"为证）。诊断关键：14:47 的会话记录在 13:50 prefetch 跑时还没创建 → 13:50 拉回 0 的是另外早已自愈的文件。系统三重容错（守护线程超时 + prefetch 4 次/天 + iCloud 自愈），不影响推送。
+- **✅ prefetch 加固**（commit bb593e0）：`prefetch-vault.py` 下载改以"是否仍 dataless"为成功判据，失败隔 5s 重试 2 次（应对瞬时态），日志记录拉不回的文件名+原因（原仅记数量）。环境变量 `DITING_PREFETCH_RETRIES`/`BACKOFF` 可调。evict 旧文件端到端测试：拉回 1/1。
+
+---
+
 ## 📝 2026-06-19 做了什么
 
 ### 2026-06-19（🩹 修 iCloud 卡死导致 research 僵死无推送 ✅）
@@ -147,7 +157,9 @@
 
 **✅ 2026-06-19 修了 iCloud 卡死 bug**：research 因 iCloud 抽风卡在 `os.listdir` 僵死、整天无推送 → 给信号目录读取加守护线程超时保护（超 10s 跳过该目录），已部署 Mac Studio。详见上方「2026-06-19 做了什么」。观察点：之后若某天某镜头偶尔少几条，可能是某目录被超时跳过（看 cron log），属预期容错、非故障。
 
-**下次第一件事**：**观察自动跑效果**——看 Mac Studio 这两天 10/14/18/20 有没有按点把情报送到飞书+Obsidian、质量如何（信号源扩展后 research 已从 3 条增到 8 条）。看完再决定调啥（v3 反馈闭环 / max_docs 调大 / searxng 代理 / 接 Mac Mini 的 luxury-bag-copilot）。了
+**✅ 2026-06-21 飞书修复验证 + prefetch 加固**：dig 06-19/06-20 在真实 launchd 定时下飞书推送成功（dug_topics 登记=铁证）；prefetch 偶发"拉回 0/N"查明为 iCloud 新文件同步瞬时态、会自愈、**非 bug**，并加了失败重试 + 失败文件名日志。
+
+**下次第一件事**：**没有待办，系统健康运行中**（5 个定时全绿 = 4 镜头 + prefetch、飞书通道通、iCloud 三重容错）。想推进就挑一个可选打磨项：① 修 `来源:?`(synthesize url 模糊匹配) ② searxng 走代理 ③ v3 反馈闭环(点有用/没用自学习) ④ 二奢生意情报镜头。或等用户提新需求。
 
 > ⚠️ **改谛听代码的流程变了**：MacBook `/Users/<dev-user>/diting-radar` 仍是开发+测试+commit/push 的主分支 → 改完 `rsync src/ scripts/ 到 macstudio` → 如改了 plist 再 `ssh macstudio` 重装 launchd。详见 CLAUDE.md「部署工作流」。
 > 回滚：MacBook `for l in research loops trends dig; do launchctl load -w ~/Library/LaunchAgents/ai.diting.$l.plist; done` + Mac Studio 对应 unload。
