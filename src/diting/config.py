@@ -4,6 +4,11 @@ from dataclasses import dataclass
 import yaml
 
 @dataclass(frozen=True)
+class ProjectSpec:
+    slug: str
+    match: str
+
+@dataclass(frozen=True)
 class Config:
     deepseek_base_url: str
     deepseek_model: str
@@ -22,6 +27,9 @@ class Config:
     dig_queue_path: str = ""
     extra_doc_dirs: tuple[str, ...] = ()      # 额外读的高价值项目目录（设计/复盘/项目笔记）作兴趣信号
     extra_lookback_days: int = 14             # 这些项目文档看更长时间（项目脉络比会话记录跨度长）
+    project_radar_status_dir: str = ""
+    project_radar_output_dir: str = ""
+    project_radar_projects: tuple[ProjectSpec, ...] = ()
 
     @property
     def deepseek_api_key(self) -> str:
@@ -53,6 +61,12 @@ def load_config(path: str | None = None) -> Config:
             dig_queue_path=raw.get("dig_queue_path", os.path.join(raw["state_dir"], "dig_queue.yaml")),
             extra_doc_dirs=tuple(raw["signal"].get("extra_doc_dirs", [])),
             extra_lookback_days=int(raw["signal"].get("extra_lookback_days", 14)),
+            project_radar_status_dir=(raw.get("project_radar") or {}).get("status_dir", ""),
+            project_radar_output_dir=(raw.get("project_radar") or {}).get("output_dir", ""),
+            project_radar_projects=tuple(
+                ProjectSpec(slug=str(p["slug"]), match=str(p["match"]))
+                for p in ((raw.get("project_radar") or {}).get("projects", []) or [])
+            ),
         )
     except KeyError as e:
         raise ValueError(f"配置文件缺少字段 {e}（文件：{path}）") from e

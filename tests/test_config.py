@@ -86,3 +86,44 @@ def test_dig_fields_read_from_yaml(tmp_path):
     cfg = load_config(str(cfg_file))
     assert cfg.dig_vault_dir == "/vault/谛听深挖"
     assert cfg.dig_max_sources == 8
+
+def test_project_radar_defaults_when_absent(tmp_path):
+    import textwrap
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text(textwrap.dedent("""
+        deepseek: {base_url: "http://x/v1", model: "m", api_key_env: "DS_KEY"}
+        signal: {session_records_dir: "/recs", lookback_days: 3}
+        crawl: {searxng_url: "http://s:8080", github_token_env: "GH"}
+        deliver: {vault_inbox_dir: "/inbox", feishu_target: "me"}
+        state_dir: "/st"
+    """))
+    cfg = load_config(str(cfg_file))
+    assert cfg.project_radar_status_dir == ""
+    assert cfg.project_radar_output_dir == ""
+    assert cfg.project_radar_projects == ()
+
+
+def test_project_radar_read_from_yaml(tmp_path):
+    import textwrap
+    from diting.config import ProjectSpec
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text(textwrap.dedent("""
+        deepseek: {base_url: "http://x/v1", model: "m", api_key_env: "DS_KEY"}
+        signal: {session_records_dir: "/recs", lookback_days: 3}
+        crawl: {searxng_url: "http://s:8080", github_token_env: "GH"}
+        deliver: {vault_inbox_dir: "/inbox", feishu_target: "me"}
+        state_dir: "/st"
+        project_radar:
+          status_dir: "/Users/<run-user>/project-status"
+          output_dir: "/vault/谛听项目情报"
+          projects:
+            - {slug: "ytst", match: "ytst"}
+            - {slug: "lbc", match: "luxury-bag-copilot"}
+    """))
+    cfg = load_config(str(cfg_file))
+    assert cfg.project_radar_status_dir == "/Users/<run-user>/project-status"
+    assert cfg.project_radar_output_dir == "/vault/谛听项目情报"
+    assert cfg.project_radar_projects == (
+        ProjectSpec(slug="ytst", match="ytst"),
+        ProjectSpec(slug="lbc", match="luxury-bag-copilot"),
+    )
