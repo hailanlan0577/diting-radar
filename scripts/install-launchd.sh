@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLIST_DIR="$SCRIPT_DIR/launchd"
 LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
 
-LENSES=(research loops trends dig)
+LENSES=(research loops trends dig project)
 
 echo "==> Copying plists to $LAUNCH_AGENTS_DIR ..."
 mkdir -p "$LAUNCH_AGENTS_DIR"
@@ -15,6 +15,7 @@ cp "$PLIST_DIR/ai.diting.research.plist" "$LAUNCH_AGENTS_DIR/"
 cp "$PLIST_DIR/ai.diting.loops.plist"    "$LAUNCH_AGENTS_DIR/"
 cp "$PLIST_DIR/ai.diting.trends.plist"   "$LAUNCH_AGENTS_DIR/"
 cp "$PLIST_DIR/ai.diting.dig.plist"      "$LAUNCH_AGENTS_DIR/"
+cp "$PLIST_DIR/ai.diting.project.plist"  "$LAUNCH_AGENTS_DIR/"
 
 echo "==> Loading agents (unload first to ensure idempotency) ..."
 for lens in "${LENSES[@]}"; do

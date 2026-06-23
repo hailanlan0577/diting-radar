@@ -32,6 +32,11 @@ def main():
             print(f"[dig] {report.date}: " +
                   (f"深挖《{report.topic}》{report.source_count} 篇来源"
                    if not report.is_empty() else "无新题/空，跳过"))
+        elif args.lens == "project":
+            from diting.project_radar import run_project_radar
+            reports = run_project_radar(cfg, client, store)
+            n = sum(1 for r in reports if not r.is_empty())
+            print(f"[project] 跑了 {len(reports)} 个变更项目，{n} 个产出情报")
         else:
             report = run_report(args.lens, cfg, client, store)
             print(f"[{report.lens}] {report.date}: {len(report.items)} 条" +

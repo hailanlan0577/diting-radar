@@ -15,8 +15,11 @@ class StateStore:
         self._profile = os.path.join(self.dir, "interest_profile.yaml")
         self._versions = os.path.join(self.dir, "versions.json")
         self._dug = os.path.join(self.dir, "dug_topics.json")
+        self._proj = os.path.join(self.dir, "project_radar.json")
         with sqlite3.connect(self._db) as c:
             c.execute("CREATE TABLE IF NOT EXISTS pushed (url TEXT PRIMARY KEY, title TEXT)")
+            c.execute("CREATE TABLE IF NOT EXISTS project_pushed "
+                      "(slug TEXT, url TEXT, PRIMARY KEY (slug, url))")
 
     def is_pushed(self, url: str) -> bool:
         with sqlite3.connect(self._db) as c:
@@ -80,3 +83,34 @@ class StateStore:
                 json.dump(dug, f, ensure_ascii=False)
         except OSError as e:
             print(f"[谛听] 写 dug_topics.json 失败：{e}")
+
+    def is_project_pushed(self, slug: str, url: str) -> bool:
+        with sqlite3.connect(self._db) as c:
+            return c.execute("SELECT 1 FROM project_pushed WHERE slug=? AND url=?",
+                             (slug, url)).fetchone() is not None
+
+    def mark_project_pushed(self, slug: str, url: str) -> None:
+        with sqlite3.connect(self._db) as c:
+            c.execute("INSERT OR IGNORE INTO project_pushed (slug, url) VALUES (?, ?)",
+                      (slug, url))
+
+    def _load_proj_hashes(self) -> dict[str, str]:
+        if not os.path.exists(self._proj):
+            return {}
+        try:
+            with open(self._proj, "r", encoding="utf-8") as f:
+                return json.load(f) or {}
+        except (json.JSONDecodeError, OSError):
+            return {}
+
+    def get_status_hash(self, slug: str) -> str | None:
+        return self._load_proj_hashes().get(slug)
+
+    def set_status_hash(self, slug: str, h: str) -> None:
+        data = self._load_proj_hashes()
+        data[slug] = h
+        try:
+            with open(self._proj, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False)
+        except OSError as e:
+            print(f"[谛听] 写 project_radar.json 失败：{e}")
