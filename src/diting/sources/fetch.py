@@ -1,6 +1,7 @@
 # src/diting/sources/fetch.py
 from __future__ import annotations
 from typing import Callable
+import logging
 import os
 import re
 from urllib.parse import quote, unquote, urlparse, parse_qs
@@ -8,11 +9,23 @@ import trafilatura
 from diting.models import Candidate
 
 
+class _DropSSRFNoise(logging.Filter):
+    """丢掉 mihomo 拦截广告/追踪域名 → 302 跳转到 127.0.0.1 → curl SSRF 防护拒绝 的噪音日志。
+    这类抓取失败已由 fetch_text/search_engine 的 try/except 兜底返空（那条候选没正文而已），
+    在无人值守 cron 里纯属刷屏；只丢含 'SSRF protection' 的记录，不屏蔽其它真错误。"""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "SSRF protection" not in record.getMessage()
+
+
 def _quiet_scrapling() -> None:
     """scrapling import 时 setup_logger() 会把 'scrapling' logger 设成 INFO 并刷 stderr。
-    在每次实际用到 scrapling（import 之后）调用本函数压回 ERROR，避免污染 cron 日志。"""
-    import logging as _lg
-    _lg.getLogger("scrapling").setLevel(_lg.ERROR)
+    在每次实际用到 scrapling（import 之后）调用本函数压回 ERROR，并加一个过滤器丢掉
+    良性的 SSRF 跳转拦截噪音（见 _DropSSRFNoise），避免污染 cron 日志。幂等。"""
+    logger = logging.getLogger("scrapling")
+    logger.setLevel(logging.ERROR)
+    if not any(isinstance(f, _DropSSRFNoise) for f in logger.filters):
+        logger.addFilter(_DropSSRFNoise())
 
 
 def _proxy() -> str | None:

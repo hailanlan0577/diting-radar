@@ -58,3 +58,33 @@ def test_quiet_scrapling_forces_error_level_even_after_reset():
     logging.getLogger("scrapling").setLevel(logging.INFO)  # 模拟 scrapling setup_logger 设回 INFO
     fetch._quiet_scrapling()
     assert logging.getLogger("scrapling").level == logging.ERROR
+
+
+def test_quiet_scrapling_drops_ssrf_noise_keeps_real_errors():
+    """mihomo 拦广告域→302 到 127.0.0.1→curl SSRF 防护拒绝 的 ERROR 是良性噪音
+    （抓取失败已由 fetch_text/search_engine 兜底返空），应被过滤；其它真错误保留。"""
+    import logging
+    from diting.sources import fetch
+    fetch._quiet_scrapling()
+    logger = logging.getLogger("scrapling")
+
+    def rec(msg):
+        return logging.LogRecord("scrapling", logging.ERROR, __file__, 0, msg, None, None)
+
+    # SSRF 噪音被丢（filter 返回 False = 不处理）
+    assert logger.filter(rec(
+        "Failed after 3 attempts: Failed to perform, curl: (7) Redirect to internal "
+        "IP 127.0.0.1 rejected (SSRF protection).")) is False
+    # 其它真错误保留
+    assert logger.filter(rec("some other genuine scrapling error")) is True
+
+
+def test_quiet_scrapling_filter_is_idempotent():
+    """多次调用不重复加 filter（_quiet_scrapling 每次抓取都会被调）。"""
+    import logging
+    from diting.sources import fetch
+    from diting.sources.fetch import _DropSSRFNoise
+    fetch._quiet_scrapling()
+    fetch._quiet_scrapling()
+    n = sum(isinstance(f, _DropSSRFNoise) for f in logging.getLogger("scrapling").filters)
+    assert n == 1
