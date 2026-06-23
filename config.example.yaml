@@ -28,6 +28,7 @@ project_radar:
   status_dir: "/Users/<run-user>/project-status"   # 各项目 STATUS/ONBOARDING 汇集（statussync 推来）
   output_dir: "/Users/<dev-user>/Library/Mobile Documents/iCloud~md~obsidian/Documents/claude/谛听项目情报"
   projects:
-    - {slug: "ytst", match: "ytst"}                       # slug = onboard 缩写 = 情报文件名
-    - {slug: "lbc",  match: "luxury-bag-copilot"}         # match = 在 status_dir 里找文件用的子串
+    - {slug: "ytst", match: "ytst"}                          # slug = onboard 缩写 = 情报文件名
+    - {slug: "lp4",  match: "luxury-path4"}                  # match = 在 status_dir 里找文件用的子串
+    - {slug: "cpsk", match: "claude-project-survival-kit"}   # 含 cpsk 本体 + cpsk-pro 并行版
     # …按需增减；漏配某项目 = 它没有项目雷达（不报错）

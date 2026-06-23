@@ -1,6 +1,6 @@
 # 项目当前状态
 
-> 最后更新：2026-06-19
+> 最后更新：2026-06-23
 > 新 Claude 进门先读 `CLAUDE.md`（地形 + 部署），再读本文件（进度 + 下一步）。
 
 ## 🎯 一句话
@@ -51,6 +51,28 @@
 2. **searxng/websearch 常空** — searxng 上游引擎可能要走代理；目前 arXiv/HN/GitHub 三家已扛起来，websearch 是 bonus。
 3. **首次 trends 跑会把当前所有版本当"新版"** — 建基线行为，之后只报真·新版。
 4. **fatten_profile 把 distill 出的实体一股脑塞进 tools/topics** — profile 会越长越大（已观察到），不影响功能，v3 可加去噪。
+
+---
+
+## 📝 2026-06-23 做了什么
+
+### 2026-06-23（🛰️ 新增第 5 镜头「项目雷达」+ 接 onboard ✅）
+
+**做了什么**：新增"项目雷达"镜头——按项目源头记账，只在某项目 STATUS 变更时单独为它跑一轮 research 流水线，产出 `谛听项目情报/<slug>.md`（最新在最上、空不写），供 `/<proj>-onboard` 自动读。
+
+- 全程走 superpowers 流程：brainstorm → 设计(`docs/superpowers/specs/2026-06-23-project-radar-design.md`) → 计划(`docs/superpowers/plans/2026-06-23-project-radar.md`) → subagent-driven 7 代码任务 + 每任务 review + opus 全分支审查（Ready to merge=YES，0 Critical/0 Important）。
+- 新代码：`project_radar.py`(detect_changed_projects + run_project_radar) / `signal/project_signal.py` / `deliver/project_out.py` / `novelty.filter_unpushed_project` / state 加 `project_pushed` 表 + STATUS hash / config 加 `project_radar` / CLI `--lens project`。**116 测试全过**。
+- **雷达盯 3 个项目**：ytst / lp4 / cpsk(match `claude-project-survival-kit` 含 cpsk-pro)。**diting 这次没上**（statussync 故意排除自己防自循环，本次未改它）。
+- onboard 接入：改了 ytst/lp4/cpsk 三个**私人** onboard 分身（加"第 3.5 步：读项目雷达情报"）；**没动 cpsk 公开模板**（避免给公开仓塞私人谛听依赖）。
+- 定时：Mac Studio 第 6 个 launchd `ai.diting.project`（每天 11:00，research 之后）。
+
+**🔖 未来 TODO（别忘）**：等谛听做完、变成公开仓库那天，给 cpsk 公开模板加一条"可选读谛听项目情报"步骤（写成"装了谛听才读、没装跳过"的可选整合，还能在说明里介绍两个开源工具配套用）。
+
+**一键回滚**：
+- 代码：`git checkout main && git reset --hard pre-project-radar`（合并前打的 tag）
+- Mac Studio 停雷达：`launchctl bootout gui/$(id -u)/ai.diting.project` + 删 `config.yaml` 里的 `project_radar:` 块（其余 4 镜头不受影响）
+
+**下次第一件事**：观察项目雷达每天 11:00 的效果（看 `谛听项目情报/ytst.md` 等有没有攒到料、准不准），再决定要不要调阈值或增减项目。
 
 ---
 
