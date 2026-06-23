@@ -127,3 +127,50 @@ def test_run_project_radar_empty_updates_hash_no_file(tmp_path):
     assert len(reports) == 1 and reports[0].is_empty()
     assert not (out / "ytst.md").exists()           # 空 → 不写文件
     assert store.get_status_hash("ytst") is not None  # 但 hash 更新（别天天重爬）
+
+
+def test_run_project_radar_isolates_project_failure(tmp_path):
+    from diting.project_radar import run_project_radar
+    d = tmp_path / "ps"; d.mkdir()
+    # aaa 失败，bbb 成功
+    (d / "macbook-aaa-STATUS.md").write_text("aaa 项目 FAILME 标记", encoding="utf-8")
+    (d / "macbook-bbb-STATUS.md").write_text("bbb 正常项目", encoding="utf-8")
+    out = tmp_path / "out"
+    cfg = _radar_cfg(d, out, (ProjectSpec("aaa", "aaa"), ProjectSpec("bbb", "bbb")))
+    store = StateStore(str(tmp_path / "state"))
+
+    class _PartialFail(_Router):
+        def complete_json(self, messages, **kw):
+            s = messages[0]["content"]
+            u = messages[1]["content"] if len(messages) > 1 else ""
+            # distill 步：aaa 的 user 消息含 FAILME 则抛异常
+            if "提炼" in s and "FAILME" in u:
+                raise RuntimeError("boom")
+            # 其它步：正常
+            if "提炼" in s:
+                return {"topics": ["x"], "entities": [], "open_loops": [], "decisions": []}
+            if "科研雷达" in s:
+                return {"queries": ["q"]}
+            if "对他是新的" in s:
+                return {"novel_urls": ["http://b"]}
+            if "私人技术情报员" in s:
+                return {"items": [{"url": "http://b", "title": "B",
+                                   "one_liner": "", "why_it_matters": "对 bbb 有用"}]}
+            raise ValueError(f"unexpected prompt: {s[:40]}")
+
+    reports = run_project_radar(cfg, _PartialFail(), store, now_ts=_NOW,
+                                sources={"websearch": lambda q: [Candidate("B", "http://b", "摘要", "websearch")]},
+                                enrich=lambda c, *a, **k: c)
+
+    # 异常不该冒出来，aaa 被隔离、skip、不进 reports；bbb 成功进去
+    assert len(reports) == 1 and not reports[0].is_empty()
+
+    # aaa 失败隔离：无输出文件、hash 未更新
+    assert not (out / "aaa.md").exists()
+    assert store.get_status_hash("aaa") is None
+
+    # bbb 继续跑：有输出、hash 已更新
+    assert (out / "bbb.md").exists()
+    assert store.get_status_hash("bbb") is not None
+    text = (out / "bbb.md").read_text(encoding="utf-8")
+    assert "[B](http://b) — 对 bbb 有用" in text
