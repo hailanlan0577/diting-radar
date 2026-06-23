@@ -65,6 +65,9 @@
 - **雷达盯 3 个项目**：ytst / lp4 / cpsk(match `claude-project-survival-kit` 含 cpsk-pro)。**diting 这次没上**（statussync 故意排除自己防自循环，本次未改它）。
 - onboard 接入：改了 ytst/lp4/cpsk 三个**私人** onboard 分身（加"第 3.5 步：读项目雷达情报"）；**没动 cpsk 公开模板**（避免给公开仓塞私人谛听依赖）。
 - 定时：Mac Studio 第 6 个 launchd `ai.diting.project`（每天 11:00，research 之后）。
+- ✅ **真跑验证**：kickstart 后 ytst.md/lp4.md 产出，内容精准对口（读 STATUS 提炼真实决策）；project_radar.json 记 ytst+lp4 hash（投递成功才记）。
+
+**🔧 顺手修了 SSRF 报错刷屏**（系统化调试，commit bcfa5d2）：根因——搜索/抓正文经 mihomo 代理时，mihomo 拦广告/追踪域名→返回指向 127.0.0.1 的跳转→curl SSRF 防护拒绝→scrapling 重试3次打 ERROR 刷日志（抓取失败本已兜底返空，纯噪音）。修法：`fetch.py` 加 `_DropSSRFNoise` 日志过滤器，只丢含 "SSRF protection" 的记录、不屏蔽真错误。Mac Studio 验证 0 SSRF 行、正常抓取不受影响。**遗留（没改）**：被拦域名仍重试3次(~3s/域)只静音没减重试，影响速度不影响功能。
 
 **🔖 未来 TODO（别忘）**：等谛听做完、变成公开仓库那天，给 cpsk 公开模板加一条"可选读谛听项目情报"步骤（写成"装了谛听才读、没装跳过"的可选整合，还能在说明里介绍两个开源工具配套用）。
 
@@ -181,7 +184,7 @@
 
 **✅ 2026-06-21 飞书修复验证 + prefetch 加固**：dig 06-19/06-20 在真实 launchd 定时下飞书推送成功（dug_topics 登记=铁证）；prefetch 偶发"拉回 0/N"查明为 iCloud 新文件同步瞬时态、会自愈、**非 bug**，并加了失败重试 + 失败文件名日志。
 
-**下次第一件事**：**没有待办，系统健康运行中**（5 个定时全绿 = 4 镜头 + prefetch、飞书通道通、iCloud 三重容错）。想推进就挑一个可选打磨项：① 修 `来源:?`(synthesize url 模糊匹配) ② searxng 走代理 ③ v3 反馈闭环(点有用/没用自学习) ④ 二奢生意情报镜头。或等用户提新需求。
+**下次第一件事（2026-06-23 更新）**：**观察项目雷达效果**——看 `谛听项目情报/ytst.md`、`lp4.md`、`cpsk.md`（每天 11:00 跑、STATUS 变了才跑）有没有持续攒到料、准不准。系统现 6 个定时全绿（5 镜头 + prefetch）。可选打磨项：① **把被拦域名的 scrapling 重试从 3 次减到 1 次**（用户问过、暂没做，让被拦域名不白等几秒）② 项目雷达加 diting（需想清楚 statussync 防自循环边界）③ 等谛听公开时给 cpsk 公开模板加"可选读雷达"步（见上方 🔖 未来 TODO）④ 修 `来源:?` / searxng 代理 ⑤ v3 反馈闭环。
 
 > ⚠️ **改谛听代码的流程变了**：MacBook `/Users/<dev-user>/diting-radar` 仍是开发+测试+commit/push 的主分支 → 改完 `rsync src/ scripts/ 到 macstudio` → 如改了 plist 再 `ssh macstudio` 重装 launchd。详见 CLAUDE.md「部署工作流」。
 > 回滚：MacBook `for l in research loops trends dig; do launchctl load -w ~/Library/LaunchAgents/ai.diting.$l.plist; done` + Mac Studio 对应 unload。

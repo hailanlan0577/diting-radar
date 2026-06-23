@@ -55,6 +55,7 @@ ssh macstudio 'bash -l -c "cd ~/diting-radar && bash scripts/run-lens.sh researc
 | 14:00 | 🧩 loops | `run-lens.sh loops` |
 | 18:00 | 🛰️ trends | `run-lens.sh trends` |
 | 20:00 | 🔬 dig（深挖） | `run-lens.sh dig` |
+| 11:00 | 📁 project（项目雷达，2026-06-23）| `run-lens.sh project` |
 | 09:50/13:50/17:50/19:50 | 🔄 prefetch | `prefetch-vault.py`（每个镜头前把 iCloud「影子」拉回本地）|
 
 每个镜头 job 跑 `scripts/run-lens.sh <lens>`（在 Mac Studio）：从本地 `~/.openclaw/openclaw.json` 读 DeepSeek key（不依赖 ssh），设 `DITING_FETCH_PROXY` 让搜索抓取走代理，**`export PATH=/opt/homebrew/bin:$PATH` 让 launchd 找得到 lark-cli/node**（否则飞书静默发不出，2026-06-19 踩坑），跑 `.venv/bin/python -m diting run --lens <lens>`，日志写 `state/cron-<lens>.log`。另有 `ai.diting.prefetch` 每天 4 次（赶在镜头前 10 分钟）把 iCloud 上变成「影子」(dataless) 的笔记拉回本地，防 research 读取卡死（2026-06-19 加）。
@@ -96,6 +97,7 @@ diting-radar/
 │   ├── novelty.py         # filter_unpushed(跨天去重) + judge_novelty(新颖度)
 │   ├── synthesize.py      # 合成 Report（带"为何重要"，空则诚实，lens-aware）
 │   ├── dig.py             # 🔬 dig 深挖镜头：run_dig 选题→搜→抓正文→synthesize_dig 综合长资料（独立入口，不复用 run_report）
+│   ├── project_radar.py   # 📁 项目雷达镜头(2026-06-23)：detect_changed_projects + run_project_radar，按项目源头记账(配 signal/project_signal.py 读STATUS+算hash、deliver/project_out.py 写 谛听项目情报/<slug>.md、novelty.filter_unpushed_project per-project去重)
 │   ├── deliver/
 │   │   ├── obsidian_out.py # 追加到 Inbox 当天笔记
 │   │   ├── feishu.py       # lark-cli --as bot 发飞书（情报 + dig 短通知）

@@ -58,7 +58,7 @@
 
 ### 🔴 当前阻塞 / 主攻目标
 
-**无硬阻塞**——谛听已于 2026-06-18 迁到 Mac Studio（<run-user>，24h 开机）自动跑，4 镜头真跑验收通过。可选打磨项见下方"下一步候选"。
+**无硬阻塞**——谛听已于 2026-06-18 迁到 Mac Studio（<run-user>，24h 开机）自动跑，4 镜头真跑验收通过。**2026-06-23 新增第 5 个「📁 项目雷达」镜头**（按项目源头记账，STATUS 变了才跑，产出 `谛听项目情报/<slug>.md` 供 `/<proj>-onboard` 读；盯 ytst/lp4/cpsk）+ onboard 接入，已部署，现 **6 个 launchd**（5 镜头 + prefetch）。可选打磨项见下方"下一步候选"。
 
 ---
 
@@ -106,6 +106,7 @@ ssh macstudio 'launchctl list | grep diting'
 1. **2026-06-18**: 多个子代理报"full suite XX 通过"其实没真跑全（websearch 因 lxml_html_clean 缺失收集失败）。教训：控制器要自己 `python -m pytest -q` 核实真实数，别全信子代理报告。
 2. **2026-06-18**: 一开始飞书发不出（自聊不可见）、key 装错解释器（python alias 坑）——见禁忌 1、2。
 3. **2026-06-18 迁移**: dig 在 Mac Studio "无新题/空，跳过"折腾半天——根因是 scrapling Fetcher 缺 playwright/browserforge（import 即崩，搜索静默返空）+ DDG 直连被墙要走代理。教训：dig 空时先单独测 `search_engine`/`Fetcher import` 而不是怀疑选题逻辑——见禁忌 6。
+4. **2026-06-23**: 项目雷达跑起来后 cron 日志刷 `SSRF protection` 报错——根因 mihomo 拦广告/追踪域→302 跳 127.0.0.1→curl SSRF 拒绝→scrapling 重试3次打 ERROR（抓取已兜底返空，纯噪音）。已修：`sources/fetch.py` 加 `_DropSSRFNoise` 日志过滤器静音良性拦截。复现技巧：经代理抓 doubleclick.net/google-analytics.com 确定性触发。
 
 ---
 
