@@ -5,6 +5,9 @@ from diting.models import Candidate
 def filter_unpushed(candidates: list[Candidate], store) -> list[Candidate]:
     return [c for c in candidates if not store.is_pushed(c.url)]
 
+def filter_unpushed_project(candidates: list[Candidate], store, slug: str) -> list[Candidate]:
+    return [c for c in candidates if not store.is_project_pushed(slug, c.url)]
+
 _SYSTEM = (
     "你在帮用户筛'对他是新的'信息。给你用户已经熟悉的背景，和一批候选。"
     "判断哪些候选对用户是**新的、值得看的**（不是他早就知道的）。"

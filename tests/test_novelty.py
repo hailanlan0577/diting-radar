@@ -30,3 +30,14 @@ def test_judge_novelty_uses_body_when_present():
     cands = [Candidate("t", "http://a", "短摘要", "arxiv", body="完整正文关键词ZYX")]
     judge_novelty(C(), cands, "ctx")
     assert "完整正文关键词ZYX" in captured["user"]
+
+def test_filter_unpushed_project_is_per_slug(tmp_path):
+    from diting.novelty import filter_unpushed_project
+    store = StateStore(str(tmp_path / "state"))
+    store.mark_project_pushed("ytst", "http://a")
+    cands = [Candidate("A", "http://a", "", "websearch"),
+             Candidate("B", "http://b", "", "websearch")]
+    # ytst 已推过 a → 只剩 b
+    assert [c.url for c in filter_unpushed_project(cands, store, "ytst")] == ["http://b"]
+    # 别的项目没推过 a → a 仍保留（项目流互不影响）
+    assert [c.url for c in filter_unpushed_project(cands, store, "lbc")] == ["http://a", "http://b"]
