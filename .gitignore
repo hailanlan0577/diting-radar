@@ -7,3 +7,4 @@ state/
 .omc/
 *.egg-info/
 graphify-out/
+.mcp.json
