@@ -12,7 +12,7 @@
 ### Phase 0 — 基础设施 ✅
 
 - Python 包结构 + 53 个 TDD 测试全绿
-- GitHub 私有仓 `hailanlan0577/diting-radar`，main 分支
+- GitHub 仓库 `hailanlan0577/diting-radar`（公开），main 分支
 - launchd 三时段定时已激活
 
 ### Phase 1 — 引擎 + 🔭 科研雷达 (v1) ✅
@@ -169,7 +169,7 @@
 
 ## 🔗 快速链接
 
-- GitHub: https://github.com/hailanlan0577/diting-radar （private）
+- GitHub: https://github.com/hailanlan0577/diting-radar （public）
 - 设计文档：`docs/superpowers/specs/2026-06-18-diting-radar-design.md`
 - 记忆系统：Qdrant v3 搜 "谛听" / file-based `~/.claude/projects/-Users-<dev-user>/memory/diting-radar.md`
 - 密钥表：`~/.claude/projects/*/memory/credentials.md`

@@ -14,7 +14,7 @@
 |------|------|------|
 | **MacBook（开发机）** | 源码主分支 + 开发/测试/commit | `/Users/<dev-user>/diting-radar`（framework python） |
 | **Mac Studio（运行机 <run-user>，24h）** | **实际跑 launchd 的地方** | `/Users/<run-user>/diting-radar`（venv `.venv/bin/python`）+ `~/Library/LaunchAgents/ai.diting.*.plist` |
-| **GitHub** | 远程备份 | `https://github.com/hailanlan0577/diting-radar`（private） |
+| **GitHub** | 远程备份 | `https://github.com/hailanlan0577/diting-radar`（public） |
 
 > 开发在 MacBook，运行在 Mac Studio（SSH 别名 `macstudio`）。改代码流程见下方「部署工作流」。
 

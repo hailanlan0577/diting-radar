@@ -100,14 +100,14 @@ flowchart LR
     Dev["💻 MacBook Pro<br/>(开发机)<br/>改代码 + 测试 + commit"] -->|"rsync 同步代码"| Run["🖥️ Mac Studio (24h 开机)<br/>(运行机)<br/>launchd 定点跑 6 个镜头"]
     Run -->|"写进 iCloud Obsidian"| iCloud["☁️ iCloud"]
     iCloud -->|"同步回来给你看"| Dev
-    Dev -->|"git push"| GH["📦 GitHub (private 备份)"]
+    Dev -->|"git push"| GH["📦 GitHub (公开备份)"]
 ```
 
 | 位置 | 角色 | 路径 |
 |------|------|------|
 | **MacBook（开发机）** | 改代码 + 测试 + commit/push | `/Users/<dev-user>/diting-radar` |
 | **Mac Studio（运行机 <run-user>，24h）** | 实际跑 launchd 的地方 | `/Users/<run-user>/diting-radar` |
-| **GitHub** | 远程私有备份 | `github.com/hailanlan0577/diting-radar`（private） |
+| **GitHub** | 远程公开备份 | `github.com/hailanlan0577/diting-radar`（public） |
 
 > ⚠️ 改代码流程见 `CLAUDE.md`「部署工作流」。两个易翻车的坑：MacBook 别用裸 `python`（被 alias 到系统版）；rsync 同步时别拿 MacBook 版覆盖 Mac Studio 定制的 `run-lens.sh` / `config.yaml`。
 
@@ -135,4 +135,4 @@ Python 3.11 · **DeepSeek V4 Pro**（全程大模型：蒸馏/查询/合成）·
 
 ## 🔑 隐私说明
 
-这是 **private 仓库**。真实密钥/配置（`config.yaml` / `~/.diting.env` / `state/`）已全部 `.gitignore`，永不入库。DeepSeek key 从 Mac Studio 本地 `~/.openclaw/openclaw.json` 读，不写死在代码里。
+这是 **公开仓库**。真实密钥/配置（`config.yaml` / `~/.diting.env` / `state/`）已全部 `.gitignore`、永不入库；文档里的真实路径、飞书 ID 已脱敏为占位符。DeepSeek key 从运行机本地 `~/.openclaw/openclaw.json` 读，不写死在代码里。

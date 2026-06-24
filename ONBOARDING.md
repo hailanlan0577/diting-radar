@@ -23,7 +23,7 @@
 |------|------|
 | **源码主分支（开发）** | MacBook `/Users/<dev-user>/diting-radar`（main 分支，framework python） |
 | **运行机（部署）** | **Mac Studio（<run-user>，24h 开机）** `/Users/<run-user>/diting-radar`（venv），SSH `macstudio`，launchd 四时段 |
-| **远程备份** | `https://github.com/hailanlan0577/diting-radar`（private） |
+| **远程备份** | `https://github.com/hailanlan0577/diting-radar`（public） |
 | **用户操作系统** | macOS Darwin 25；开发机 MacBook Pro M1 Max 64GB，运行机 Mac Studio |
 
 ### 🚫 N 大禁忌（已踩过的坑，绝不能再犯）
@@ -51,7 +51,7 @@
 
 | Phase | 状态 | 说明 |
 |-------|------|------|
-| 0 基础设施 | ✅ | 仓库/53 测试绿/GitHub 私有仓/launchd 定时 |
+| 0 基础设施 | ✅ | 仓库/53 测试绿/GitHub 公开仓/launchd 定时 |
 | 1 引擎 + 科研雷达 (v1) | ✅ | 信号→蒸馏→爬→去重→合成→飞书+Obsidian 端到端，真跑验收过 |
 | 2 四镜头 + 定时 (v2) | ✅ | loops/trends/**dig** 镜头 + launchd 10/14/18/20 四时段，**已迁 Mac Studio 跑** |
 | 3 反馈闭环 + 中文源 + 二奢镜头 (v3) | ⏳ | 未启动 |
