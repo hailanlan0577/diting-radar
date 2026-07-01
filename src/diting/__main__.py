@@ -19,12 +19,12 @@ def _run_ask(cfg, client, topic, mode, max_sources):
     date = time.strftime("%Y-%m-%d")
     if mode == "dig":
         from diting.dig import generate_dig_queries, synthesize_dig
-        from diting.sources.fetch import search_engine
+        from diting.sources.websearch import search_web
         from diting.crawl import enrich_bodies
         queries = generate_dig_queries(client, topic)
         seen, cands = set(), []
         for q in queries:
-            for c in search_engine(q):
+            for c in search_web(q, cfg.searxng_url, max_results=max_sources):
                 if c.url not in seen:
                     seen.add(c.url); cands.append(c)
         cands = cands[:max_sources]

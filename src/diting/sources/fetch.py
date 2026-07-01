@@ -5,6 +5,7 @@ import logging
 import os
 import re
 from urllib.parse import quote, unquote, urlparse, parse_qs
+import httpx
 import trafilatura
 from diting.models import Candidate
 
@@ -72,9 +73,16 @@ def _ddg_unwrap(href: str) -> str:
 
 
 def _ddg_html(query: str, max_results: int, timeout_s: int) -> str:
-    from scrapling.fetchers import Fetcher    # 仅 Fetcher（HTTP），不碰 StealthyFetcher
-    _quiet_scrapling()
-    return _html_of(Fetcher().get(f"{_DDG_HTML}?q={quote(query)}", timeout=timeout_s, proxy=_proxy()))
+    resp = httpx.get(
+        f"{_DDG_HTML}?q={quote(query)}",
+        headers={"User-Agent": "Mozilla/5.0"},
+        proxy=_proxy(),
+        follow_redirects=True,
+        timeout=timeout_s,
+        trust_env=False,
+    )
+    resp.raise_for_status()
+    return resp.text
 
 
 def search_engine(query: str, *, max_results: int = 5,

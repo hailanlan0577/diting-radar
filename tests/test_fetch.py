@@ -51,6 +51,33 @@ def test_search_engine_href_before_class():
     assert out[0].title == "Href First"
 
 
+def test_ddg_html_uses_httpx_with_proxy(monkeypatch):
+    from diting.sources import fetch
+
+    class _Resp:
+        text = _DDG
+
+        def raise_for_status(self):
+            return None
+
+    seen = {}
+
+    def fake_get(url, **kwargs):
+        seen["url"] = url
+        seen["kwargs"] = kwargs
+        return _Resp()
+
+    monkeypatch.setattr(fetch.httpx, "get", fake_get)
+    monkeypatch.setattr(fetch, "_proxy", lambda: "http://127.0.0.1:7890")
+
+    html = fetch._ddg_html("OpenAI Agents SDK", 3, 30)
+
+    assert "Cool Paper" in html
+    assert seen["url"].startswith("https://html.duckduckgo.com/html/?q=")
+    assert seen["kwargs"]["proxy"] == "http://127.0.0.1:7890"
+    assert seen["kwargs"]["follow_redirects"] is True
+
+
 def test_quiet_scrapling_forces_error_level_even_after_reset():
     """_quiet_scrapling() 应能在 logger 被设回 INFO 后压回 ERROR（模拟 scrapling setup_logger 行为）。"""
     import logging
